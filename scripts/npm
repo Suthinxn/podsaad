@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd dustboy/web/static
+npm $1 $2

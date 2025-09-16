@@ -1,0 +1,5 @@
+DEBUG = True
+SECRET_KEY = "changethisonproduction"
+MONGODB_DB = "chotdb"
+APP_TITLE = "Chotiwat"
+BASE_URL = "http://localhost:8080"

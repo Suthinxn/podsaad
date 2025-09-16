@@ -1,0 +1,3 @@
+#!/bin/bash
+
+DUSTBOY_SETTING=$(pwd)/.env.development poetry run dustboy-web -d "$@"
