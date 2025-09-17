@@ -1,9 +1,8 @@
 from flask_mongoengine import MongoEngine
 from flask import Flask
 
-from .users import User
 
-__all__ = ["User"]
+__all__ = []
 
 db = MongoEngine()
 
