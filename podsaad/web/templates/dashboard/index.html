@@ -1,6 +1,6 @@
 {% extends "/base/default_page.html" %}
 
-{% block title %} PodSaAd {% endblock title %}
+{% block title %} PODSAAD {% endblock title %}
 
 {% block content %}
 <div class="flex flex-col m-6">
@@ -16,7 +16,8 @@
           </select>
         </div>
 
-        <div>
+        <!-- Heat Map -->
+        <div class="m-2">
           <div id="map"></div>
 
           <!-- Leaflet CSS -->
@@ -44,6 +45,30 @@
                 }).addTo(map);
               });
           </script>
+
+          <div class="w-full">
+            <table class="w-full">
+              <thead>
+                <tr>
+                  <th class="w-1/5">ดีมาก</th>
+                  <th class="w-1/5">ดี</th>
+                  <th class="w-1/5">ปานกลาง</th>
+                  <th class="w-1/5">เริ่มมีผลต่อสุขภาพ</th>
+                  <th class="w-1/5">มีผลต่อสุขภาพ</th>
+                </tr>
+              </thead>
+                <tbody class="rounded-2xl">
+                  <tr class="h-6">
+                    <td class="bg-blue-300 rounded-l-full"></td>
+                    <td class="bg-green-300"></td>
+                    <td class="bg-yellow-300"></td>
+                    <td class="bg-orange-300"></td>
+                    <td class="bg-red-300 rounded-r-full"></td>
+                  </tr>
+                </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
   </div>
