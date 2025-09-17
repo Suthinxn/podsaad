@@ -18,6 +18,16 @@
     href="{{ 'node_modules/@phosphor-icons/web/src/regular/style.css' | static_url }}">
   <link rel="stylesheet" type="text/css"
     href="{{ 'node_modules/@phosphor-icons/web/src/fill/style.css' | static_url }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    #map {
+      width: 100%;
+      height: 500px;   /* 👈 ต้องมี ไม่งั้นแผนที่จะไม่โผล่ */
+      border-radius: 0.5rem;
+    }
+  </style>
+
   {% block head %}
   {% endblock head %}
 </head>

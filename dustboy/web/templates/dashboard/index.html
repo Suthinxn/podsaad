@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="flex flex-col m-6">
-  <div>
+  <div class="mb-4">
     <h1 class="text-2xl font-bold">Forecast pm2.5</h1>
       <div class="border border-white shadow-2xl rounded-lg">
         <div class="m-2">
@@ -17,47 +17,60 @@
         </div>
 
         <div>
+          <div id="map"></div>
+
+          <!-- Leaflet CSS -->
+          <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+          <!-- Leaflet JS -->
+          <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+          <!-- Heatmap Plugin -->
+          <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+          <script>
+            var map = L.map('map').setView([13.7563, 100.5018], 6);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            fetch("/data")
+              .then(res => res.json())
+              .then(data => {
+                var heat = L.heatLayer(data, {
+                  radius: 40,
+                  blur: 20,
+                  maxZoom: 10,
+                  max: 100
+                }).addTo(map);
+              });
+          </script>
         </div>
       </div>
   </div>
 
   <div>
-    <div class="overflow-x-auto">
-      <table class="table">
-        <!-- head -->
-        <thead>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>Job</th>
-            <th>Favorite Color</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- row 1 -->
-          <tr>
-            <th>1</th>
-            <td>Cy Ganderton</td>
-            <td>Quality Control Specialist</td>
-            <td>Blue</td>
-          </tr>
-          <!-- row 2 -->
-          <tr>
-            <th>2</th>
-            <td>Hart Hagerty</td>
-            <td>Desktop Support Technician</td>
-            <td>Purple</td>
-          </tr>
-          <!-- row 3 -->
-          <tr>
-            <th>3</th>
-            <td>Brice Swyre</td>
-            <td>Tax Accountant</td>
-            <td>Red</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="overflow-x-auto rounded-lg shadow">
+        <table class="table w-full">
+          <thead>
+            <tr class="bg-gray-100 border-b border-gray-300">
+              <th class="w-1/5 text-left px-4 py-3">จังหวัด</th>
+              <th class="w-1/5 text-center px-4 py-3">ชั่วโมงล่าสุด</th>
+              <th class="w-1/5 text-center px-4 py-3">คาดการรายชั่วโมงถัดไป</th>
+              <th class="w-1/5 text-center px-4 py-3">เฉลี่ย 24 ชั่วโมง (µg/m³)</th>
+              <th class="w-1/5 text-center px-4 py-3">ข้อมูลกราฟ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="px-4 py-3 text-left">สงขลา</td>
+              <td class="px-4 py-3 text-center">32.1</td> 
+              <td class="px-4 py-3 text-center">32.1</td>
+              <td class="px-4 py-3 text-center">32.1</td>
+              <td class="px-4 py-3 text-center">32.1</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
   </div>
 
 
