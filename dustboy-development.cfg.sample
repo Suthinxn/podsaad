@@ -1,5 +1,5 @@
 DEBUG = True
 SECRET_KEY = "changethisonproduction"
-MONGODB_DB = "chotdb"
-APP_TITLE = "Chotiwat"
+MONGODB_DB = "podsaaddb"
+APP_TITLE = "PODSAAD"
 BASE_URL = "http://localhost:8080"
