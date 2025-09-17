@@ -1,0 +1,175 @@
+<div class="menu bg-[#F5F7FB] text-gray-900 min-h-full w-64 p-4 flex flex-col justify-between">
+  <!-- Top Section -->
+  <div>
+    <!-- Logo -->
+    <div class="flex justify-center px-3 py-4 border-b-2 border-gray-200 mb-4">
+      <a href="{{ url_for('dashboard.index') }}" class="flex items-center gap-1 pr-5">
+        <i class="ph ph-fill ph-sparkle text-4xl font-bold bg-radial-[at_20%_20%] from-cyan-400 to-blue-800 to-75% bg-clip-text text-transparent"></i>
+        <h1 class="text-3xl font-bold bg-radial-[at_0%_10%] from-cyan-400 to-blue-800 to-75% bg-clip-text text-transparent">
+          ยังคิดไม่ออก
+        </h1>
+      </a>
+    </div>
+
+
+    <!-- Dashboard Menu -->
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Dashboard</p>
+      <ul class="space-y-1">
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="{{ url_for('dashboard.index') }}">
+            <i class="ph ph-desktop text-lg"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-chart-line-up text-lg"></i>
+            <span>Forecasts</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Menu -->
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Workflow</p>
+      <ul class="space-y-1">
+        <li>
+            <a href=""
+              class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+              <i class="ph ph-film-script text-lg"></i>
+              Master Files
+            </a>
+        </li>
+        <li>
+            <a href=""
+              class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+              <i class="ph ph-seal-check text-lg"></i>
+              Validator Template Files
+            </a>
+        </li>
+        <li>
+          <a href=""
+            class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+            <i class="ph ph-gear-six text-lg"></i>
+            Configurations SAP
+          </a>
+        </li>
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-scroll text-lg"></i>
+            <span>Planning</span>
+          </a>
+        </li>
+        
+        <!-- Workflow -->
+        {#<li>
+          <details class="group" {% if request.endpoint in [ 'master_files.index' , 'configurations.index'
+            , 'planning_sap.index' , 'product_planning.index' , 'cover_sheet.index' , 'sequence_sheet.index' , ]%}
+            open {% endif %}>
+            <summary class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md cursor-pointer">
+              <i class="ph ph-monitor-arrow-up text-lg"></i>
+              <span>Workflow</span>
+            </summary>
+            <ul class="ml-8 mt-1 space-y-1">
+              <li>
+                <a href="{{ url_for('master_files.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Master Files
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('countries.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Countries
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('configurations.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Configurations SAP
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('planning_sap.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Layout SAP
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('product_planning.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Product Planning
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('cover_sheet.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Cover Sheet
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('sequence_sheet.index') }}"
+                  class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Sequence Sheet
+                </a>
+              </li>
+            </ul>
+          </details>
+        </li>#}
+      </ul>
+    </div>
+
+    <!-- Other Menu -->
+    <div>
+      <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Other Menu</p>
+      <ul class="space-y-1">
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-users text-lg"></i>
+            <span>Users</span>
+          </a>
+        </li>
+        {#<li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="{{ url_for('email_templates.index') }}">
+            <i class="ph ph-envelope text-lg"></i>
+            <span>Email Templates</span>
+          </a>
+        </li>
+        <li>#}
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-sign-out text-lg"></i>
+            <span>Log Out</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Bottom Profile -->
+  <div class="flex items-center gap-3 bg-gray-200 rounded-lg p-3">
+    <div class="avatar">
+      <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white">
+        <i class="ph ph-user text-2xl flex align-center justify-center m-[0.2rem]"></i>
+      </div>
+    </div>
+    <div>
+      <p class="font-medium leading-tight">{{ current_user.first_name }} {{ current_user.last_name }}</p>
+      <p class="text-xs text-gray-500">{{ current_user.email }}</p>
+    </div>
+  </div>
+</div>

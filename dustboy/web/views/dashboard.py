@@ -24,3 +24,8 @@ def index():
 @module.route("/data")
 def data():
     return jsonify(pm25_data)
+
+
+@module.route("/top10_province", methods=["GET", "POST"])
+def top10_province():
+    return render_template("/dashboard/top10_province.html")

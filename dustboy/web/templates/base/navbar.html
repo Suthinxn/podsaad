@@ -1,0 +1,95 @@
+{# base/sidebar.html #}
+<div class="menu bg-[#F5F7FB] text-gray-900 min-h-full w-64 p-4 flex flex-col justify-between">
+  <!-- Top Section -->
+  <div>
+    <!-- Dashboard Menu -->
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Dashboard</p>
+      <ul class="space-y-1">
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="{{ url_for('dashboard.index') }}">
+            <i class="ph ph-desktop text-lg"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-chart-line-up text-lg"></i>
+            <span>Forecasts</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Workflow Menu -->
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Workflow</p>
+      <ul class="space-y-1">
+        <li>
+          <a href=""
+            class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+            <i class="ph ph-film-script text-lg"></i>
+            Master Files
+          </a>
+        </li>
+        <li>
+          <a href=""
+            class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+            <i class="ph ph-seal-check text-lg"></i>
+            Validator Template Files
+          </a>
+        </li>
+        <li>
+          <a href=""
+            class="flex items-center p-2 hover:bg-gray-200 rounded-md">
+            <i class="ph ph-gear-six text-lg"></i>
+            Configurations SAP
+          </a>
+        </li>
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-scroll text-lg"></i>
+            <span>Planning</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Other Menu -->
+    <div>
+      <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Other Menu</p>
+      <ul class="space-y-1">
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-users text-lg"></i>
+            <span>Users</span>
+          </a>
+        </li>
+        <li>
+          <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
+            href="">
+            <i class="ph ph-sign-out text-lg"></i>
+            <span>Log Out</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Bottom Profile -->
+  <div class="flex items-center gap-3 bg-gray-200 rounded-lg p-3">
+    <div class="avatar">
+      <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white">
+        <i class="ph ph-user text-2xl flex align-center justify-center m-[0.2rem]"></i>
+      </div>
+    </div>
+    <div>
+      <p class="font-medium leading-tight">{{ current_user.first_name }} {{ current_user.last_name }}</p>
+      <p class="text-xs text-gray-500">{{ current_user.email }}</p>
+    </div>
+  </div>
+</div>
