@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cd dustboy/web/static
+cd podsaad/web/static
 npm $1 $2

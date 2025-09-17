@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 
 def create_app():
-    app.config.from_object("dustboy.default_settings")
+    app.config.from_object("podsaad.default_settings")
 
     for key, value in os.environ.items():
         app.config[key] = value
@@ -29,7 +29,7 @@ def create_app():
         if value.strip() and value.strip()[0] in ["[", "{"]:
             app.config[key] = json.loads(value)
 
-    app.config.from_envvar("DUSTBOY_SETTING", silent=True)
+    app.config.from_envvar("PODSAAD_SETTING", silent=True)
 
     models.init_db(app)
     views.register_blueprint(app)

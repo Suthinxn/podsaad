@@ -2,7 +2,7 @@ from flask import redirect, url_for, request, session, render_template
 from flask_login import current_user, LoginManager, login_url, logout_user
 from werkzeug.exceptions import Forbidden, Unauthorized
 import datetime
-from dustboy.web import models
+from podsaad.web import models
 
 from functools import wraps
 

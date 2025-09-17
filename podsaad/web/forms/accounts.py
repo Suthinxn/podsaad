@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, validators, StringField, SelectField
 from flask_mongoengine.wtf import model_form
-from dustboy.web import models
+from podsaad.web import models
 
 BaseLoginForm = model_form(
     models.User,

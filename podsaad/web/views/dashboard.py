@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, jsonify
 from flask_login import login_required
 from datetime import datetime
 
-from dustboy import models
+from podsaad import models
 
 module = Blueprint("dashboard", __name__)
 

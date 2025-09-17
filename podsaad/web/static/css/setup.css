@@ -2,7 +2,7 @@
 @import "tailwindcss";
 @config "./tailwind.config.js";
 @plugin "daisyui" {
-  themes: dustboy;
+  themes: podsaad;
 }
 
 @theme {
@@ -10,7 +10,7 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "dustboy";
+  name: "podsaad";
   default: true;
   prefersdark: false;
   color-scheme: "light";
