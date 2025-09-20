@@ -9,6 +9,7 @@ from flask import Flask
 from .. import models
 from . import views
 from . import acl
+from . import redis_rq
 
 app = Flask(__name__)
 
@@ -34,6 +35,7 @@ def create_app():
     models.init_db(app)
     views.register_blueprint(app)
     acl.init_acl(app)
+    redis_rq.init_rq(app)
 
     jinja_env = app.jinja_env
     jinja_env.add_extension("jinja2.ext.do")
