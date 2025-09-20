@@ -29,3 +29,7 @@ def data():
 @module.route("/top10_province", methods=["GET", "POST"])
 def top10_province():
     return render_template("/dashboard/top10_province.html")
+
+@module.route("/graph_infomation", methods=["GET", "POST"])
+def graph_infomation():
+    return render_template("/dashboard/graph_infomation.html")

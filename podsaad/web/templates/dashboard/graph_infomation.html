@@ -1,0 +1,64 @@
+{% extends "/base/default_page.html" %}
+
+{% block title %} PODSAAD {% endblock title %}
+
+{% block content %}
+<div class="m-6">
+  <h1 class="text-2xl font-bold mb-4">ข้อมูล PM 2.5 ในอดีต</h1>
+	<h2 class="text-xl mb-4">จังหวัดสงขลา สถานีเทศบาลนครหาดใหญ่</h2>
+  <div id="pm25-chart"></div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+  // Mock Data
+  const hours = [
+    "01 PM","02 PM","03 PM","04 PM","05 PM","06 PM","07 PM","08 PM",
+    "09 PM","10 PM","11 PM","12 AM","01 AM","02 AM","03 AM","04 AM",
+    "05 AM","06 AM","07 AM","08 AM","09 AM","10 AM","11 AM","12 PM","01 PM"
+  ];
+  const pm25 = [24, 23, 28, 16, 21, 14, 10, 12, 16, 22, 23, 30, 14, 13, 7, 15, 12, 16, 13, 14, 23, 32, 13, 12, 13];
+
+  // กำหนดชุดสีสลับ (ฟ้า / เขียว / เหลือง)
+  const palette = ["#87CEFA", "#90EE90", "#FFD966"];
+  const colors = pm25.map((_, i) => palette[i % palette.length]);
+
+  var options = {
+    chart: {
+      type: 'bar',
+      height: 400
+    },
+    series: [{
+      name: 'PM2.5',
+      data: pm25
+    }],
+    xaxis: {
+      categories: hours
+    },
+    plotOptions: {
+      bar: {
+        distributed: true,
+        borderRadius: 3
+      }
+    },
+    colors: colors,
+    yaxis: {
+      title: {
+        text: "PM2.5 (µg/m³)"
+      }
+    },
+    title: {
+      text: "ข้อมูลย้อนหลัง PM2.5",
+      align: "center"
+    },
+    legend: {
+      show: false
+    }
+  };
+
+  var chart = new ApexCharts(document.querySelector("#pm25-chart"), options);
+  chart.render();
+</script>
+{% endblock %}
