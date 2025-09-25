@@ -21,14 +21,29 @@ def index():
     return render_template("/dashboard/index.html")
 
 
+def pm25_to_intensity(value):
+    if value <= 15:
+        return 0.2  # ฟ้า/เขียวอ่อน
+    elif value <= 35:
+        return 0.4  # เขียว-เหลือง
+    elif value <= 55:
+        return 0.6  # ส้ม
+    elif value <= 75:
+        return 0.8  # แดงอ่อน
+    else:
+        return 1.0  # แดงเข้ม
+
+
 @module.route("/data")
 def data():
-    return jsonify(pm25_data)
+    mapped = [[d[0], d[1], pm25_to_intensity(d[2])] for d in pm25_data]
+    return jsonify(mapped)
 
 
 @module.route("/top10_province", methods=["GET", "POST"])
 def top10_province():
     return render_template("/dashboard/top10_province.html")
+
 
 @module.route("/graph_infomation", methods=["GET", "POST"])
 def graph_infomation():

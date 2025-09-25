@@ -37,14 +37,43 @@
             fetch("/data")
               .then(res => res.json())
               .then(data => {
+                // เริ่มต้น heat layer
                 var heat = L.heatLayer(data, {
-                  radius: 40,
-                  blur: 20,
+                  radius: 60,
+                  blur: 0,
                   maxZoom: 10,
-                  max: 100
+                  maxOpacity: 1.0,
+                  minOpacity: 0.5,
+                  gradient: {
+                    0.0: 'blue',
+                    0.25: 'cyan',
+                    0.5: 'lime',
+                    0.75: 'yellow',
+                    1.0: 'red'
+                  }
                 }).addTo(map);
+
+                // ปรับ radius ตามระดับ zoom
+                map.on('zoomend', function () {
+                  var zoom = map.getZoom();
+                  var newRadius;
+
+                  if (zoom < 6) {
+                    newRadius = 90;   // มุมกว้าง → ปื้นใหญ่
+                  } else if (zoom < 8) {
+                    newRadius = 70;   // ระดับกลาง
+                  } else {
+                    newRadius = 50;   // ซูมใกล้ → ปื้นเล็กลง
+                  }
+
+                  heat.setOptions({ radius: newRadius });
+                });
               });
           </script>
+
+
+
+
 
           <div class="w-full">
             <table class="w-full">
