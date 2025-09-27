@@ -7,18 +7,16 @@ from podsaad import models
 module = Blueprint("dashboard", __name__)
 
 pm25_data = [
-    [13.7563, 100.5018, 80],  # Bangkok
-    [18.7883, 98.9853, 55],  # Chiang Mai
-    [15.8700, 100.9925, 30],  # Central Thailand
-    [16.4419, 102.8350, 70],  # Khon Kaen
-    [7.0060, 100.4980, 45],  # Hat Yai
+    [7.0060, 100.4980, 45],  # หาดใหญ่ (สงขลา)
+    [6.8664, 101.2501, 40],  # ปัตตานี
+    [8.4325, 99.9631, 35],  # นครศรีธรรมราช
+    [9.1382, 99.3215, 28],  # สุราษฎร์ธานี
+    [7.5636, 99.6114, 32],  # ตรัง
+    [8.0863, 98.9063, 30],  # ภูเก็ต
+    [6.4673, 100.1867, 38],  # สตูล
+    [6.4241, 101.8213, 50],  # ยะลา
+    [6.5423, 101.2800, 42],  # นราธิวาส
 ]
-
-
-@module.route("/")
-def index():
-
-    return render_template("/dashboard/index.html")
 
 
 def pm25_to_intensity(value):
@@ -32,6 +30,12 @@ def pm25_to_intensity(value):
         return 0.8  # แดงอ่อน
     else:
         return 1.0  # แดงเข้ม
+
+
+@module.route("/")
+def index():
+
+    return render_template("/dashboard/index.html")
 
 
 @module.route("/data")

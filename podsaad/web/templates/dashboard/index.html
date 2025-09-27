@@ -1,132 +1,167 @@
 {% extends "/base/default_page.html" %}
 
-{% block title %} PODSAAD {% endblock title %}
+{% block title %}PODSAAD{% endblock title %}
 
 {% block content %}
 <div class="flex flex-col m-6">
-  <div class="mb-4">
-    <h1 class="text-2xl font-bold">Forecast pm2.5</h1>
-      <div class="border border-white shadow-2xl rounded-lg">
-        <div class="m-2">
-          <select class="select w-full">
-            <option disabled selected>Pick a color</option>
-            <option>Crimson</option>
-            <option>Amber</option>
-            <option>Velvet</option>
-          </select>
-        </div>
-
-        <!-- Heat Map -->
-        <div class="m-2">
-          <div id="map" class="z-0"></div>
-
-          <!-- Leaflet CSS -->
-          <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-          <!-- Leaflet JS -->
-          <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-          <!-- Heatmap Plugin -->
-          <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
-          <script>
-            var map = L.map('map').setView([13.7563, 100.5018], 6);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-
-            fetch("/data")
-              .then(res => res.json())
-              .then(data => {
-                // เริ่มต้น heat layer
-                var heat = L.heatLayer(data, {
-                  radius: 60,
-                  blur: 0,
-                  maxZoom: 10,
-                  maxOpacity: 1.0,
-                  minOpacity: 0.5,
-                  gradient: {
-                    0.0: 'blue',
-                    0.25: 'cyan',
-                    0.5: 'lime',
-                    0.75: 'yellow',
-                    1.0: 'red'
-                  }
-                }).addTo(map);
-
-                // ปรับ radius ตามระดับ zoom
-                map.on('zoomend', function () {
-                  var zoom = map.getZoom();
-                  var newRadius;
-
-                  if (zoom < 6) {
-                    newRadius = 90;   // มุมกว้าง → ปื้นใหญ่
-                  } else if (zoom < 8) {
-                    newRadius = 70;   // ระดับกลาง
-                  } else {
-                    newRadius = 50;   // ซูมใกล้ → ปื้นเล็กลง
-                  }
-
-                  heat.setOptions({ radius: newRadius });
-                });
-              });
-          </script>
-
-
-
-
-
-          <div class="w-full">
-            <table class="w-full">
-              <thead>
-                <tr>
-                  <th class="w-1/5">ดีมาก</th>
-                  <th class="w-1/5">ดี</th>
-                  <th class="w-1/5">ปานกลาง</th>
-                  <th class="w-1/5">เริ่มมีผลต่อสุขภาพ</th>
-                  <th class="w-1/5">มีผลต่อสุขภาพ</th>
-                </tr>
-              </thead>
-                <tbody class="rounded-2xl">
-                  <tr class="h-6">
-                    <td class="bg-blue-300 rounded-l-full"></td>
-                    <td class="bg-green-300"></td>
-                    <td class="bg-yellow-300"></td>
-                    <td class="bg-orange-300"></td>
-                    <td class="bg-red-300 rounded-r-full"></td>
-                  </tr>
-                </tbody>
-            </table>
-          </div>
-
-        </div>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold mb-4">Forecast PM2.5</h1>
+    
+    <div class="border border-gray-200 shadow-xl rounded-lg bg-white">
+      <!-- Dropdown -->
+      <div class="m-4">
+        <select class="select select-bordered w-full">
+          <option disabled selected>เลือกชุดสี</option>
+          <option>Crimson</option>
+          <option>Amber</option>
+          <option>Velvet</option>
+        </select>
       </div>
-  </div>
 
-  <div>
-    <div class="overflow-x-auto rounded-lg shadow">
-        <table class="table w-full">
+      <!-- Map container -->
+      <div id="map" class="w-full h-96 rounded-lg shadow"></div>
+
+      <!-- Legend -->
+      <div class="w-full p-4">
+        <table class="w-full text-center">
           <thead>
-            <tr class="bg-gray-100 border-b border-gray-300">
-              <th class="w-1/5 text-left px-4 py-3">จังหวัด</th>
-              <th class="w-1/5 text-center px-4 py-3">ชั่วโมงล่าสุด</th>
-              <th class="w-1/5 text-center px-4 py-3">คาดการรายชั่วโมงถัดไป</th>
-              <th class="w-1/5 text-center px-4 py-3">เฉลี่ย 24 ชั่วโมง (µg/m³)</th>
-              <th class="w-1/5 text-center px-4 py-3">ข้อมูลกราฟ</th>
+            <tr>
+              <th class="w-1/5">ดีมาก</th>
+              <th class="w-1/5">ดี</th>  
+              <th class="w-1/5">ปานกลาง</th>
+              <th class="w-1/5">เริ่มมีผลต่อสุขภาพ</th>
+              <th class="w-1/5">มีผลต่อสุขภาพ</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td class="px-4 py-3 text-left">สงขลา</td>
-              <td class="px-4 py-3 text-center">32.1</td> 
-              <td class="px-4 py-3 text-center">32.1</td>
-              <td class="px-4 py-3 text-center">32.1</td>
-              <td class="px-4 py-3 text-center"><a href="{{ url_for('dashboard.graph_infomation')}}"><i class="ph ph-eye"></i></a></td>
+            <tr class="h-6">
+              <td class="bg-blue-300 rounded-l-full"></td>
+              <td class="bg-green-300"></td>
+              <td class="bg-yellow-300"></td>
+              <td class="bg-orange-300"></td>
+              <td class="bg-red-300 rounded-r-full"></td>
             </tr>
           </tbody>
         </table>
       </div>
+    </div>
   </div>
 
-
+  <!-- ตารางข้อมูล -->
+  <div class="overflow-x-auto rounded-lg shadow bg-white">
+    <table class="table w-full">
+      <thead>
+        <tr class="bg-gray-100 border-b border-gray-300">
+          <th class="w-1/5 text-left px-4 py-3">จังหวัด</th>
+          <th class="w-1/5 text-center px-4 py-3">ชั่วโมงล่าสุด</th>
+          <th class="w-1/5 text-center px-4 py-3">คาดการรายชั่วโมงถัดไป</th>
+          <th class="w-1/5 text-center px-4 py-3">เฉลี่ย 24 ชั่วโมง (µg/m³)</th>
+          <th class="w-1/5 text-center px-4 py-3">ข้อมูลกราฟ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="px-4 py-3 text-left">สงขลา</td>
+          <td class="px-4 py-3 text-center">32.1</td> 
+          <td class="px-4 py-3 text-center">32.1</td>
+          <td class="px-4 py-3 text-center">32.1</td>
+          <td class="px-4 py-3 text-center">32.1</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
+
+<!-- โหลด MapLibre GL -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+
+<script>
+// ------------------------------
+// 1. ข้อมูล PM2.5
+// ------------------------------
+const pm25_data = [
+  [7.0060, 100.4980, 45],  // หาดใหญ่
+  [6.8664, 101.2501, 40],  // ปัตตานี
+  [8.4325, 99.9631, 35],   // นครศรีธรรมราช
+  [9.1382, 99.3215, 28],   // สุราษฎร์ธานี
+  [7.5636, 99.6114, 32],   // ตรัง
+  [8.0863, 98.9063, 30],   // ภูเก็ต
+  [6.4673, 100.1867, 38],  // สตูล
+  [6.4241, 101.8213, 50],  // ยะลา
+  [6.5423, 101.2800, 42],  // นราธิวาส
+];
+
+// ------------------------------
+// 2. แปลงเป็น GeoJSON
+// ------------------------------
+const geojson = {
+  type: "FeatureCollection",
+  features: pm25_data.map(([lat, lon, value]) => ({
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: [lon, lat]  // GeoJSON = [lon, lat]
+    },
+    properties: { pm25: value }
+  }))
+};
+
+// ------------------------------
+// 3. สร้างแผนที่ด้วย MapLibre GL
+// ------------------------------
+const map = new maplibregl.Map({
+  container: "map",
+  style: "https://demotiles.maplibre.org/style.json",
+  center: [100.4980, 7.0060],
+  zoom: 6
+});
+
+// ------------------------------
+// 4. เพิ่ม heatmap layer
+// ------------------------------
+map.on("load", () => {
+  map.addSource("pm25", { type: "geojson", data: geojson });
+
+  map.addLayer({
+    id: "pm25-heat",
+    type: "heatmap",
+    source: "pm25",
+    maxzoom: 9,
+    paint: {
+      "heatmap-intensity": [
+        "interpolate", ["linear"], ["zoom"], 0, 1, 9, 3
+      ],
+      "heatmap-weight": [
+        "interpolate", ["linear"], ["get", "pm25"], 0, 0, 50, 1
+      ],
+      "heatmap-color": [
+        "interpolate", ["linear"], ["heatmap-density"],
+        0, "rgba(0, 255, 0, 0)",
+        0.2, "lime",
+        0.4, "yellow",
+        0.6, "orange",
+        0.8, "red",
+        1, "purple"
+      ],
+      "heatmap-radius": [
+        "interpolate", ["linear"], ["zoom"], 0, 10, 9, 40
+      ],
+      "heatmap-opacity": 0.8
+    }
+  });
+
+  map.addLayer({
+    id: "pm25-points",
+    type: "circle",
+    source: "pm25",
+    paint: {
+      "circle-radius": 6,
+      "circle-color": "white",
+      "circle-stroke-color": "black",
+      "circle-stroke-width": 1
+    }
+  });
+});
+</script>
 {% endblock content %}
