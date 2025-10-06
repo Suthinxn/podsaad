@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, current_app
 from flask_login import login_required
-from datetime import datetime
+from datetime import datetime, timedelta
+from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_station
 
 from podsaad import models
 
@@ -17,7 +18,6 @@ pm25_data = [
 
 @module.route("/")
 def index():
-
     return render_template("/dashboard/index.html")
 
 
@@ -38,6 +38,27 @@ def pm25_to_intensity(value):
 def data():
     mapped = [[d[0], d[1], pm25_to_intensity(d[2])] for d in pm25_data]
     return jsonify(mapped)
+
+@module.route("/get_data")
+def get_data():
+    raw_data = None
+
+    # Call API
+    config = {
+        "API_DHARA" : current_app.config.get("API_DHARA"),
+        "SOURCE" : current_app.config.get("SOURCE"),
+    }
+
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+
+    api_data = fetch_data(today, tomorrow, config)
+    df = get_raw_data(api_data)
+    data_by_station = filter_by_station(df)
+
+    print(">>>\n", data_by_station)
+
+    return data_by_station
 
 
 @module.route("/top10_province", methods=["GET", "POST"])
