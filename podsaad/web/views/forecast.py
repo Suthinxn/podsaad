@@ -109,36 +109,63 @@ def forecast_pm25():
 def forecast_test():
     """
     ทดสอบโมเดลด้วย fake data (ไม่เรียก API)
+    สำหรับหลายสถานีในภาคใต้ (ย้อนหลัง 30 วัน)
     """
-    # สร้างข้อมูลจำลอง 60 วันย้อนหลัง
+    stations = [
+        "119t",
+        "118t",
+        "93t",
+        "89t",
+        "62t",
+        "121t",
+        "o73",
+        "120t",
+        "43t",
+        "63t",
+        "78t",
+        "o70",
+        "44t",
+        "o28",
+        "42t",
+    ]
+
+    # วันที่ย้อนหลัง 30 วัน (เท่ากับ LOOKBACK)
     end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-    dates = pd.date_range(end=end_date, periods=60, freq="D")
+    dates = pd.date_range(end=end_date, periods=LOOKBACK, freq="D")
 
-    # สร้าง DataFrame mock features
-    df_daily = pd.DataFrame(
-        {
-            "timestamp": dates,
-            "PM_2_5": np.random.uniform(10, 100, size=60),
-            "PM_1": np.random.uniform(5, 80, size=60),
-            "PM_0_1": np.random.uniform(1, 50, size=60),
-            "humidity": np.random.uniform(40, 90, size=60),
-            "pressure": np.random.uniform(950, 1020, size=60),
-            "temperature": np.random.uniform(20, 35, size=60),
-        }
-    ).set_index("timestamp")
+    all_results = []
 
-    print("+++++++++++++++++++++++++++++")
-    print(df_daily)
+    for station_code in stations:
+        # mock feature data ต่อสถานี (ย้อนหลัง 30 วัน)
+        df_daily = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "PM_2_5": np.random.uniform(10, 100, size=LOOKBACK),
+                "PM_1": np.random.uniform(5, 80, size=LOOKBACK),
+                "PM_0_1": np.random.uniform(1, 50, size=LOOKBACK),
+                "humidity": np.random.uniform(40, 90, size=LOOKBACK),
+                "pressure": np.random.uniform(950, 1020, size=LOOKBACK),
+                "temperature": np.random.uniform(20, 35, size=LOOKBACK),
+            }
+        ).set_index("timestamp")
 
-    # ตัดให้เหลือ lookback วันล่าสุด
-    last_window = df_daily[-LOOKBACK:].values.astype(np.float32)
+        # เตรียมข้อมูลเข้ารูป tensor
+        input_tensor = torch.tensor(
+            df_daily.values.astype(np.float32), dtype=torch.float32
+        ).unsqueeze(0)
 
-    input_tensor = torch.tensor(last_window, dtype=torch.float32).unsqueeze(0)
-    with torch.no_grad():
-        prediction = model(input_tensor)
+        # พยากรณ์
+        with torch.no_grad():
+            prediction = model(input_tensor)
 
-    forecast = prediction.numpy().flatten().tolist()
+        forecast = prediction.numpy().flatten().tolist()
 
-    return jsonify(
-        {"station_code": "FAKE", "forecast_days": HORIZON, "forecast": forecast}
-    )
+        all_results.append(
+            {
+                "station_code": station_code,
+                "forecast_days": HORIZON,
+                "forecast": forecast,
+            }
+        )
+
+    return jsonify({"result": all_results})
