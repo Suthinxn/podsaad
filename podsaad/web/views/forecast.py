@@ -11,29 +11,33 @@ module = Blueprint("forecast", __name__, url_prefix="/forecast")
 
 LOOKBACK = 30
 HORIZON = 14
-FEATURES = ['PM_2_5','PM_1','PM_0_1','humidity','pressure','temperature']
+FEATURES = ["PM_2_5", "PM_1", "PM_0_1", "humidity", "pressure", "temperature"]
 
 
 # ---------------- โมเดล ----------------
 class ConvBiLSTM(nn.Module):
     def __init__(self, input_dim, lookback, horizon):
         super().__init__()
-        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv1d(
+            in_channels=input_dim, out_channels=32, kernel_size=3, padding=1
+        )
         self.bn1 = nn.BatchNorm1d(32)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.3)
-        self.lstm = nn.LSTM(input_size=32, hidden_size=64, batch_first=True, bidirectional=True)
-        self.fc = nn.Linear(64*2, horizon)
+        self.lstm = nn.LSTM(
+            input_size=32, hidden_size=64, batch_first=True, bidirectional=True
+        )
+        self.fc = nn.Linear(64 * 2, horizon)
 
     def forward(self, x):
-        x = x.permute(0,2,1)                # [B, input_dim, lookback]
+        x = x.permute(0, 2, 1)  # [B, input_dim, lookback]
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = x.permute(0,2,1)                # [B, lookback, 32]
+        x = x.permute(0, 2, 1)  # [B, lookback, 32]
         out, _ = self.lstm(x)
-        out = out[:, -1, :]                 # last timestep
+        out = out[:, -1, :]  # last timestep
         out = self.fc(out)
         return out
 
@@ -46,6 +50,7 @@ model.eval()
 # ถ้ามี scaler
 # from joblib import load
 # scaler = load("scaler.pkl")
+
 
 @module.route("/", methods=["GET"])
 def forecast_pm25():
@@ -75,7 +80,11 @@ def forecast_pm25():
     # เตรียมข้อมูล
     df = df.sort_values("timestamp").set_index("timestamp")
     df_daily = df.resample("D")[FEATURES].mean()
-    df_daily = df_daily.interpolate(method="linear").fillna(method="bfill").fillna(method="ffill")
+    df_daily = (
+        df_daily.interpolate(method="linear")
+        .fillna(method="bfill")
+        .fillna(method="ffill")
+    )
 
     if len(df_daily) < LOOKBACK:
         return jsonify({"error": f"ต้องการข้อมูลย้อนหลัง {LOOKBACK} วัน"}), 400
@@ -91,8 +100,45 @@ def forecast_pm25():
 
     print("[FORECAST] ---", forecast)
 
-    return jsonify({
-        "station_code": station_code,
-        "forecast_days": HORIZON,
-        # "forecast": forecast
-    })
+    return jsonify(
+        {"station_code": station_code, "forecast_days": HORIZON, "forecast": forecast}
+    )
+
+
+@module.route("/test", methods=["GET"])
+def forecast_test():
+    """
+    ทดสอบโมเดลด้วย fake data (ไม่เรียก API)
+    """
+    # สร้างข้อมูลจำลอง 60 วันย้อนหลัง
+    end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    dates = pd.date_range(end=end_date, periods=60, freq="D")
+
+    # สร้าง DataFrame mock features
+    df_daily = pd.DataFrame(
+        {
+            "timestamp": dates,
+            "PM_2_5": np.random.uniform(10, 100, size=60),
+            "PM_1": np.random.uniform(5, 80, size=60),
+            "PM_0_1": np.random.uniform(1, 50, size=60),
+            "humidity": np.random.uniform(40, 90, size=60),
+            "pressure": np.random.uniform(950, 1020, size=60),
+            "temperature": np.random.uniform(20, 35, size=60),
+        }
+    ).set_index("timestamp")
+
+    print("+++++++++++++++++++++++++++++")
+    print(df_daily)
+
+    # ตัดให้เหลือ lookback วันล่าสุด
+    last_window = df_daily[-LOOKBACK:].values.astype(np.float32)
+
+    input_tensor = torch.tensor(last_window, dtype=torch.float32).unsqueeze(0)
+    with torch.no_grad():
+        prediction = model(input_tensor)
+
+    forecast = prediction.numpy().flatten().tolist()
+
+    return jsonify(
+        {"station_code": "FAKE", "forecast_days": HORIZON, "forecast": forecast}
+    )
