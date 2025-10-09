@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, current_app
+from flask import Blueprint, render_template, jsonify, current_app, request
 from flask_login import login_required
 from datetime import datetime
 
@@ -52,7 +52,26 @@ def get_pm25_color(value):
         return "#FF0000"
 
 
-def generate_heatmap_image():
+def get_data_json():
+    url = "http://localhost:8080/forecast/test"
+    res = requests.get(url)
+
+    if res.status_code == 200:
+        json_data = res.json()  # json_data เป็น dict
+        data = json_data["result"]  # เข้าถึง list ของ forecast แต่ละสถานี
+
+        rows = []
+        for s in data:
+            for day, val in enumerate(s["forecast"]):
+                rows.append({"station": s["station_code"], "day": day, "pm25": val})
+
+        df_forecast = pd.DataFrame(rows)
+        return df_forecast
+    else:
+        raise Exception(f"Error {res.status_code}")
+
+
+def generate_heatmap_image(select_day):
     """สร้างภาพ heatmap และ return เป็น base64"""
     # โหลด GeoJSON
     url = "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json"
@@ -83,27 +102,40 @@ def generate_heatmap_image():
     gdf_south = gpd.GeoDataFrame.from_features(southern_features)
     mask_geom = gdf_south.unary_union
 
-    # ข้อมูล PM2.5
-    df_pm25 = pd.DataFrame(
+    # ดึงข้อมูล PM2.5 จาก API
+    df_forecast = get_data_json()
+
+    # กรองข้อมูลตาม select_day
+    df_forecast_day = df_forecast[df_forecast["day"] == select_day].copy()
+
+    # ข้อมูลตำแหน่งสถานี (Station metadata)
+    station_info = pd.DataFrame(
         [
-            [8.052856870972867, 98.91866399571485, 37.42, "Krabi"],
-            [10.49595443351772, 99.18869286937533, 21.67, "Chumphon"],
-            [7.569948469925628, 99.58568656274488, 44.81, "Trang"],
-            [8.246763400521472, 99.88254292558815, 28.34, "Nakhon Si Thammarat"],
-            [6.4258031744613655, 101.7928157990397, 32.75, "Narathiwat"],
-            [6.891036422471899, 101.25096924050584, 17.63, "Pattani"],
-            [8.426219039086634, 98.5294494386699, 46.58, "Phangnga"],
-            [7.616883312560487, 100.0485906828405, 24.91, "Phatthalung"],
-            [7.885638909394165, 98.3916465144643, 39.06, "Phuket"],
-            [6.545268471622002, 101.28175395399666, 15.28, "Yala"],
-            [5.764744028287182, 101.06739886748494, 41.12, "Yala"],
-            [9.96216409415826, 98.6388418999343, 19.47, "Ranong"],
-            [7.015948866031788, 100.49172833785089, 33.85, "Songkhla"],
-            [6.667066168736155, 100.32681389447792, 28.92, "Songkhla"],
-            [9.125613772682643, 99.32449412333452, 25.66, "Surat Thani"],
+            ["119t", "Krabi", 8.052856870972867, 98.91866399571485],
+            ["118t", "Chumphon", 10.49595443351772, 99.18869286937533],
+            ["93t", "Trang", 7.569948469925628, 99.58568656274488],
+            ["89t", "Nakhon Si Thammarat", 8.246763400521472, 99.88254292558815],
+            ["62t", "Narathiwat", 6.4258031744613655, 101.7928157990397],
+            ["121t", "Pattani", 6.891036422471899, 101.25096924050584],
+            ["o73", "Phangnga", 8.426219039086634, 98.5294494386699],
+            ["120t", "Phatthalung", 7.616883312560487, 100.0485906828405],
+            ["43t", "Phuket", 7.885638909394165, 98.3916465144643],
+            ["63t", "Yala", 6.545268471622002, 101.28175395399666],
+            ["78t", "Yala", 5.764744028287182, 101.06739886748494],
+            ["o70", "Ranong", 9.96216409415826, 98.6388418999343],
+            ["44t", "Songkhla", 7.015948866031788, 100.49172833785089],
+            ["o28", "Songkhla", 6.667066168736155, 100.32681389447792],
+            ["42t", "Surat Thani", 9.125613772682643, 99.32449412333452],
         ],
-        columns=["Lat", "Lon", "PM25", "province"],
+        columns=["Station", "province", "Lat", "Lon"],
     )
+
+    # รวมข้อมูล PM2.5 กับข้อมูลตำแหน่งสถานี
+    df_pm25 = station_info.merge(
+        df_forecast_day, left_on="Station", right_on="station", how="inner"
+    )
+    df_pm25 = df_pm25.rename(columns={"pm25": "PM25"})
+    df_pm25 = df_pm25[["Station", "province", "Lat", "Lon", "PM25"]]
 
     # สร้าง IDW Interpolation
     lats, lons, values = (
@@ -185,14 +217,20 @@ def generate_heatmap_image():
 @module.route("/")
 def index():
     # สร้างแผนที่
-    img_data, southern_features, df_pm25, bounds, vmin, vmax = generate_heatmap_image()
+    select_day = int(request.args.get("select_day", 0))
+    img_data, southern_features, df_pm25, bounds, vmin, vmax = generate_heatmap_image(
+        select_day
+    )
     minx, miny, maxx, maxy = bounds
 
     southern_geo = {"type": "FeatureCollection", "features": southern_features}
     center_lat, center_lon = (miny + maxy) / 2, (minx + maxx) / 2
 
     m = folium.Map(
-        location=[center_lat, center_lon], zoom_start=7, tiles="OpenStreetMap"
+        # location=[center_lat, center_lon], zoom_start=7, tiles="OpenStreetMap"
+        location=[6.5, 100],
+        zoom_start=7,
+        tiles="OpenStreetMap",
     )
 
     # ใช้ base64 image แทนไฟล์
@@ -223,11 +261,11 @@ def index():
             [row["Lat"], row["Lon"]],
             icon=folium.DivIcon(
                 html=f"""
-                <div style="width:50px;height:50px;background:{color};
+                <div style="width:40px;height:40px;background:{color};
                             border-radius:50%;border:3px solid white;
                             display:flex;align-items:center;justify-content:center;
                             box-shadow:0 2px 6px rgba(0,0,0,0.4);">
-                    <span style="color:white;font-weight:bold;font-size:16px;">{row["PM25"]}</span>
+                    <span style="color:black;font-weight:bold;font-size:12px;">{row["PM25"]}</span>
                 </div>
             """
             ),
