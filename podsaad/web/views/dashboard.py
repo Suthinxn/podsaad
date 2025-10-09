@@ -1,23 +1,43 @@
 from flask import Blueprint, render_template, jsonify, current_app
 from flask_login import login_required
-from datetime import datetime, timedelta
-from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_station
+from datetime import datetime
 
 from podsaad import models
 
 module = Blueprint("dashboard", __name__)
 
-pm25_data = [
-    [13.7563, 100.5018, 80],  # Bangkok
-    [18.7883, 98.9853, 55],  # Chiang Mai
-    [15.8700, 100.9925, 30],  # Central Thailand
-    [16.4419, 102.8350, 70],  # Khon Kaen
-    [7.0060, 100.4980, 45],  # Hat Yai
-]
+
+# --- ฟังก์ชันกำหนดสีตามค่า PM2.5 ---
+def get_pm25_color(value):
+    if value <= 25:
+        return "#0066FF"  # น้ำเงิน - คุณภาพดีมาก
+    elif value <= 37:
+        return "#00CC00"  # เขียว - คุณภาพดี
+    elif value <= 50:
+        return "#FFFF00"  # เหลือง - คุณภาพปานกลาง
+    elif value <= 75:
+        return "#FF9900"  # ส้ม - มีผลกระทบต่อสุขภาพ
+    else:
+        return "#FF0000"  # แดง - มีผลกระทบต่อสุขภาพมาก
+
+
+def get_pm25_level(value):
+    """ส่งกลับระดับคุณภาพอากาศ"""
+    if value <= 25:
+        return "คุณภาพดีมาก"
+    elif value <= 37:
+        return "คุณภาพดี"
+    elif value <= 50:
+        return "คุณภาพปานกลาง"
+    elif value <= 75:
+        return "มีผลกระทบต่อสุขภาพ"
+    else:
+        return "มีผลกระทบต่อสุขภาพมาก"
 
 
 @module.route("/")
 def index():
+
     return render_template("/dashboard/index.html")
 
 

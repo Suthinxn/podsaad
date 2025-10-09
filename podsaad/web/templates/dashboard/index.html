@@ -1,132 +1,82 @@
 {% extends "/base/default_page.html" %}
 
-{% block title %} PODSAAD {% endblock title %}
+{% block title %}PODSAAD{% endblock title %}
 
 {% block content %}
-<div class="flex flex-col m-6">
-  <div class="mb-4">
-    <h1 class="text-2xl font-bold">Forecast pm2.5</h1>
-      <div class="border border-white shadow-2xl rounded-lg">
-        <div class="m-2">
-          <select class="select w-full">
-            <option disabled selected>Pick a color</option>
-            <option>Crimson</option>
-            <option>Amber</option>
-            <option>Velvet</option>
-          </select>
-        </div>
+<div class="flex flex-col gap-8 m-6">
 
-        <!-- Heat Map -->
-        <div class="m-2">
-          <div id="map" class="z-0"></div>
-
-          <!-- Leaflet CSS -->
-          <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-          <!-- Leaflet JS -->
-          <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-          <!-- Heatmap Plugin -->
-          <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
-          <script>
-            var map = L.map('map').setView([13.7563, 100.5018], 6);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-
-            fetch("/data")
-              .then(res => res.json())
-              .then(data => {
-                // เริ่มต้น heat layer
-                var heat = L.heatLayer(data, {
-                  radius: 60,
-                  blur: 0,
-                  maxZoom: 10,
-                  maxOpacity: 1.0,
-                  minOpacity: 0.5,
-                  gradient: {
-                    0.0: 'blue',
-                    0.25: 'cyan',
-                    0.5: 'lime',
-                    0.75: 'yellow',
-                    1.0: 'red'
-                  }
-                }).addTo(map);
-
-                // ปรับ radius ตามระดับ zoom
-                map.on('zoomend', function () {
-                  var zoom = map.getZoom();
-                  var newRadius;
-
-                  if (zoom < 6) {
-                    newRadius = 90;   // มุมกว้าง → ปื้นใหญ่
-                  } else if (zoom < 8) {
-                    newRadius = 70;   // ระดับกลาง
-                  } else {
-                    newRadius = 50;   // ซูมใกล้ → ปื้นเล็กลง
-                  }
-
-                  heat.setOptions({ radius: newRadius });
-                });
-              });
-          </script>
-
-
-
-
-
-          <div class="w-full">
-            <table class="w-full">
-              <thead>
-                <tr>
-                  <th class="w-1/5">ดีมาก</th>
-                  <th class="w-1/5">ดี</th>
-                  <th class="w-1/5">ปานกลาง</th>
-                  <th class="w-1/5">เริ่มมีผลต่อสุขภาพ</th>
-                  <th class="w-1/5">มีผลต่อสุขภาพ</th>
-                </tr>
-              </thead>
-                <tbody class="rounded-2xl">
-                  <tr class="h-6">
-                    <td class="bg-blue-300 rounded-l-full"></td>
-                    <td class="bg-green-300"></td>
-                    <td class="bg-yellow-300"></td>
-                    <td class="bg-orange-300"></td>
-                    <td class="bg-red-300 rounded-r-full"></td>
-                  </tr>
-                </tbody>
-            </table>
-          </div>
-
-        </div>
-      </div>
-  </div>
-
+  <!-- Title -->
   <div>
-    <div class="overflow-x-auto rounded-lg shadow">
-        <table class="table w-full">
-          <thead>
-            <tr class="bg-gray-100 border-b border-gray-300">
-              <th class="w-1/5 text-left px-4 py-3">จังหวัด</th>
-              <th class="w-1/5 text-center px-4 py-3">ชั่วโมงล่าสุด</th>
-              <th class="w-1/5 text-center px-4 py-3">คาดการรายชั่วโมงถัดไป</th>
-              <th class="w-1/5 text-center px-4 py-3">เฉลี่ย 24 ชั่วโมง (µg/m³)</th>
-              <th class="w-1/5 text-center px-4 py-3">ข้อมูลกราฟ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="px-4 py-3 text-left">สงขลา</td>
-              <td class="px-4 py-3 text-center">32.1</td> 
-              <td class="px-4 py-3 text-center">32.1</td>
-              <td class="px-4 py-3 text-center">32.1</td>
-              <td class="px-4 py-3 text-center"><a href="{{ url_for('dashboard.graph_infomation')}}"><i class="ph ph-eye"></i></a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <h1 class="text-3xl font-bold text-gray-800">Forecast PM2.5</h1>
+    <p class="text-gray-500">ข้อมูลคุณภาพอากาศในพื้นที่ภาคใต้</p>
   </div>
 
+  <!-- Map Card -->
+  <div class="border border-gray-200 shadow-xl rounded-2xl bg-white overflow-hidden">
+    <!-- Map -->
+    <div class="h-150">
+      {{ map_html|safe }}
+    </div>
+
+    <!-- Legend -->
+    <div class="border-t border-gray-200 p-4">
+      <div class="flex justify-between text-sm font-medium text-gray-700">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-blue-400 rounded-full"></span> ดีมาก
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-green-400 rounded-full"></span> ดี
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-yellow-400 rounded-full"></span> ปานกลาง
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-orange-400 rounded-full"></span> เริ่มมีผล
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-red-400 rounded-full"></span> มีผลต่อสุขภาพ
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="border border-gray-200 shadow-xl rounded-2xl bg-white overflow-hidden">
+    <div class="p-4 border-b border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-800">ข้อมูลรายจังหวัด</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table w-full">
+        <thead>
+          <tr class="bg-gray-100 text-gray-700 text-sm uppercase">
+            <th class="text-left px-4 py-3">จังหวัด</th>
+            <th class="text-center px-4 py-3">ล่าสุด</th>
+            <th class="text-center px-4 py-3">คาดการณ์ถัดไป</th>
+            <th class="text-center px-4 py-3">เฉลี่ย 24 ชม.</th>
+            <th class="text-center px-4 py-3">ข้อมูลกราฟ</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-800 text-sm">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">สงขลา</td>
+            <td class="text-center px-4 py-3">32.1</td>
+            <td class="text-center px-4 py-3">33.0</td>
+            <td class="text-center px-4 py-3">31.5</td>
+            <td class="text-center px-4 py-3 text-blue-600 hover:underline cursor-pointer">ดูกราฟ</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">ปัตตานี</td>
+            <td class="text-center px-4 py-3">28.4</td>
+            <td class="text-center px-4 py-3">29.0</td>
+            <td class="text-center px-4 py-3">27.9</td>
+            <td class="text-center px-4 py-3 text-blue-600 hover:underline cursor-pointer">ดูกราฟ</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 </div>
 {% endblock content %}
+
+
