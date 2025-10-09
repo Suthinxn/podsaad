@@ -3,8 +3,11 @@ from flask import Flask
 
 import mongoengine as me
 
+from .pm25_interpolated_119t import PM25Interpolated119t
 
-__all__ = []
+__all__ = [
+    "PM25Interpolated119t"
+]
 
 db = MongoEngine()
 
@@ -20,4 +23,4 @@ def init_mongoengine(settings):
     username = settings.get("MONGODB_USERNAME", "")
     password = settings.get("MONGODB_PASSWORD", "")
 
-    me.connect(db=dbname, host=host, port=port, username=username, password=password)
+    me.connect(db=dbname, host=host, port=port, username=username, password=password, authentication_source="admin")
