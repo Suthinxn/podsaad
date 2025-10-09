@@ -10,6 +10,7 @@ from .. import models
 from . import views
 from . import acl
 from . import redis_rq
+from mongoengine import get_connection
 
 app = Flask(__name__)
 
@@ -36,6 +37,17 @@ def create_app():
     views.register_blueprint(app)
     acl.init_acl(app)
     redis_rq.init_rq(app)
+
+
+    # --- DEBUG: Test MongoDB connection ---
+    try:
+        conn = get_connection()
+        db_name = app.config.get("MONGODB_DB", "(unknown)")
+        print(f"[DEBUG] MongoDB connection successful → Database: {db_name}")
+        print(f"[DEBUG] Host: {app.config.get('MONGODB_HOST')}:{app.config.get('MONGODB_PORT')}")
+    except Exception as e:
+        print("[DEBUG] MongoDB connection failed!")
+        print(e)
 
     jinja_env = app.jinja_env
     jinja_env.add_extension("jinja2.ext.do")
