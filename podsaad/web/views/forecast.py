@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 
 from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_station
+from joblib import load
 
 module = Blueprint("forecast", __name__, url_prefix="/forecast")
 
@@ -41,6 +42,8 @@ class ConvBiLSTM(nn.Module):
         out = self.fc(out)
         return out
 
+# scaler
+scaler = load("models_pytorch/scaler.pkl")
 
 # โหลดโมเดลแค่ครั้งเดียวตอนแอปรัน
 model = ConvBiLSTM(input_dim=len(FEATURES), lookback=LOOKBACK, horizon=HORIZON)
@@ -107,36 +110,17 @@ def forecast_pm25():
 
 @module.route("/test", methods=["GET"])
 def forecast_test():
-    """
-    ทดสอบโมเดลด้วย fake data (ไม่เรียก API)
-    สำหรับหลายสถานีในภาคใต้ (ย้อนหลัง 30 วัน)
-    """
     stations = [
-        "119t",
-        "118t",
-        "93t",
-        "89t",
-        "62t",
-        "121t",
-        "o73",
-        "120t",
-        "43t",
-        "63t",
-        "78t",
-        "o70",
-        "44t",
-        "o28",
-        "42t",
+        "119t","118t","93t","89t","62t","121t","o73","120t","43t",
+        "63t","78t","o70","44t","o28","42t",
     ]
 
-    # วันที่ย้อนหลัง 30 วัน (เท่ากับ LOOKBACK)
     end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     dates = pd.date_range(end=end_date, periods=LOOKBACK, freq="D")
 
     all_results = []
 
     for station_code in stations:
-        # mock feature data ต่อสถานี (ย้อนหลัง 30 วัน)
         df_daily = pd.DataFrame(
             {
                 "timestamp": dates,
@@ -149,22 +133,31 @@ def forecast_test():
             }
         ).set_index("timestamp")
 
-        # เตรียมข้อมูลเข้ารูป tensor
+        # --- Scale input features ---
+        last_window_scaled = scaler.transform(df_daily[FEATURES])
+
+        # --- Prepare tensor ---
         input_tensor = torch.tensor(
-            df_daily.values.astype(np.float32), dtype=torch.float32
+            last_window_scaled.astype(np.float32), dtype=torch.float32
         ).unsqueeze(0)
 
-        # พยากรณ์
+        # --- Prediction ---
         with torch.no_grad():
-            prediction = model(input_tensor)
+            prediction_scaled = model(input_tensor).cpu().numpy().flatten()
 
-        forecast = prediction.numpy().flatten().tolist()
+        # --- Inverse transform prediction ---
+        # เนื่องจาก scaler.transform() ต้องการ shape เท่ากับจำนวน features
+        # เราจะสร้าง array ขนาด (HORIZON, n_features) โดยใส่ค่า zeros สำหรับ features ที่ไม่ใช่ target
+        dummy_features = np.zeros((HORIZON, len(FEATURES)))
+        dummy_features[:, FEATURES.index("PM_2_5")] = prediction_scaled
+
+        forecast_real = scaler.inverse_transform(dummy_features)[:, FEATURES.index("PM_2_5")]
 
         all_results.append(
             {
                 "station_code": station_code,
                 "forecast_days": HORIZON,
-                "forecast": forecast,
+                "forecast": forecast_real.tolist(),
             }
         )
 
