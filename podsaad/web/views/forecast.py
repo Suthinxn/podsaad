@@ -7,6 +7,8 @@ import torch.nn as nn
 
 from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_station
 from joblib import load
+from mongoengine import Document, StringField, FloatField
+
 
 module = Blueprint("forecast", __name__, url_prefix="/forecast")
 
@@ -49,11 +51,6 @@ scaler = load("models_pytorch/scaler.pkl")
 model = ConvBiLSTM(input_dim=len(FEATURES), lookback=LOOKBACK, horizon=HORIZON)
 model.load_state_dict(torch.load("models_pytorch/best_model.pt", map_location="cpu"))
 model.eval()
-
-# ถ้ามี scaler
-# from joblib import load
-# scaler = load("scaler.pkl")
-
 
 @module.route("/", methods=["GET"])
 def forecast_pm25():
@@ -160,5 +157,82 @@ def forecast_test():
                 "forecast": forecast_real.tolist(),
             }
         )
+
+    return jsonify({"result": all_results})
+
+
+
+
+def get_collection_class(station_code):
+    """คืน class MongoEngine ของแต่ละ collection"""
+    class_attrs = {
+        "meta": {"collection": f"pm25_interpolated_{station_code}", "strict": False},
+        "timestamp": StringField(),
+        "station_name": StringField(),
+        "station_code": StringField(),
+        "lat": FloatField(),
+        "lon": FloatField(),
+        "PM_2_5": FloatField(),
+        "PM_1": FloatField(),
+        "PM_0_1": FloatField(),
+        "temperature": FloatField(),
+        "humidity": FloatField(),
+        "pressure": FloatField(),
+    }
+    return type(f"PM25Interpolated_{station_code}", (Document,), class_attrs)
+
+@module.route("/predict", methods=["GET"])
+def forecast():
+    all_results = []
+
+    stations = [
+    "119t","118t","93t","89t","62t","121t","o73","120t","43t",
+    "63t","78t","o70","44t","o28","42t",
+    ]
+
+    for station_code in stations:
+        CollectionClass = get_collection_class(station_code)
+        # print(f"Debug Collection {CollectionClass}")
+        # --- ดึงข้อมูลล่าสุด 30 วัน (เรียงจากเก่า → ใหม่) ---
+        records = list(
+            CollectionClass.objects().order_by("timestamp").limit(LOOKBACK)
+        )
+        if len(records) < LOOKBACK:
+            continue  # ข้ามถ้าข้อมูลไม่ครบ 30 วัน
+
+        # print(f"Debug {records}")
+        # --- สร้าง DataFrame ---
+        df_daily = pd.DataFrame([{f: getattr(r, f) for f in FEATURES + ["timestamp"]} for r in records])
+        df_daily["timestamp"] = pd.to_datetime(df_daily["timestamp"])
+        df_daily = df_daily.sort_values("timestamp").set_index("timestamp")
+
+        # --- ตรวจสอบ NaN ---
+        if df_daily[FEATURES].isnull().any().any():
+            df_daily[FEATURES] = df_daily[FEATURES].interpolate(method='linear').ffill().bfill()
+
+        # --- Scale input features ---
+        try:
+            last_window_scaled = scaler.transform(df_daily[FEATURES])
+        except Exception as e:
+            print(f"Error scaling data for {station_code}: {e}")
+            continue
+
+        # --- Prepare tensor ---
+        input_tensor = torch.tensor(last_window_scaled.astype(np.float32), dtype=torch.float32).unsqueeze(0)
+
+        # --- Prediction ---
+        with torch.no_grad():
+            prediction_scaled = model(input_tensor).cpu().numpy().flatten()
+
+        # --- Inverse transform prediction ---
+        dummy_features = np.zeros((HORIZON, len(FEATURES)))
+        dummy_features[:, FEATURES.index("PM_2_5")] = prediction_scaled
+        forecast_real = scaler.inverse_transform(dummy_features)[:, FEATURES.index("PM_2_5")]
+
+        all_results.append({
+            "station_code": station_code,
+            "forecast_days": HORIZON,
+            "forecast": forecast_real.tolist(),
+        })
 
     return jsonify({"result": all_results})
