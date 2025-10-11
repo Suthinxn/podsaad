@@ -1,121 +1,141 @@
 {% extends "/base/default_page.html" %}
 
-{% block title %}PODSAAD{% endblock title %}
+{% block title %}PODSAAD - ระบบพยากรณ์คุณภาพอากาศภาคใต้{% endblock title %}
 
 {% block content %}
-<div class="flex flex-col gap-8 m-6">
+<div class="flex flex-col min-h-screen">
+  <div class="container mx-auto max-w-7xl px-4">
 
-  <!-- Title -->
-  <div>
-    <h1 class="text-3xl font-bold text-gray-800">Forecast PM2.5</h1>
-    <p class="text-gray-500">ข้อมูลคุณภาพอากาศในพื้นที่ภาคใต้</p>
-  </div>
-
-  <!-- Day Selector Dropdown -->
-  <div>
-    <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100">
-      <div class="flex flex-col gap-3">
-        <label for="daySelector" class="text-lg font-semibold text-gray-800">
-          เลือกวันที่พยากรณ์:
-        </label>
-        <select 
-          id="daySelector"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-700 font-medium transition duration-200"
-          onchange="changeDay(this.value)"
-        >
-          <option value="" disabled {% if current_day is none %}selected{% endif %}>-- เลือกวันที่ --</option>
-          {% for day in range(14) %}
-          <option value="{{ day }}" {% if day == current_day %}selected{% endif %}>
-            {% if day == 0 %}
-                วันนี้
-            {% elif day == 1 %}
-                พรุ่งนี้
-            {% else %}
-                วันที่ {{ day + 1 }}
-            {% endif %}
-          </option>
-          {% endfor %}
-        </select>
+    <!-- Header -->
+    <div class="mt-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-white border border-gray-100">
+          <i class="ph ph-map-trifold text-3xl text-blue-600"></i>
+        </div>
+        <div>
+          <h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-500 to-blue-800 bg-clip-text text-transparent">
+            ระบบพยากรณ์ PM2.5
+          </h1>
+          <p class="text-gray-600 mt-1 flex items-center gap-2 text-sm sm:text-base">
+            <i class="ph ph-map-pin"></i>
+            ข้อมูลคุณภาพอากาศในพื้นที่ภาคใต้ของประเทศไทย
+          </p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Map Card -->
-  <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-      <!-- Map -->
-      <div class="h-150">
-          {{ map_html|safe }}
+    <!-- Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
+        <h3 class="text-gray-600 text-sm font-medium">สถานะปัจจุบัน</h3>
+        <p class="text-3xl font-bold text-green-600 mt-2">ดี</p>
+        <p class="text-gray-500 text-sm">เฉลี่ย 30.2 µg/m³</p>
       </div>
-      <!-- Legend -->
-      <div class="border-t border-gray-100 p-5">
-          <div class="grid grid-cols-5 gap-4 text-sm font-medium text-gray-700">
-              <div class="flex items-center gap-2">
-                  <span class="w-6 h-3 bg-blue-400 rounded-full shadow-sm"></span> ดีมาก
-              </div>
-              <div class="flex items-center gap-2">
-                  <span class="w-6 h-3 bg-green-400 rounded-full shadow-sm"></span> ดี
-              </div>
-              <div class="flex items-center gap-2">
-                  <span class="w-6 h-3 bg-yellow-400 rounded-full shadow-sm"></span> ปานกลาง
-              </div>
-              <div class="flex items-center gap-2">
-                  <span class="w-6 h-3 bg-orange-400 rounded-full shadow-sm"></span> เริ่มมีผล
-              </div>
-              <div class="flex items-center gap-2">
-                  <span class="w-6 h-3 bg-red-400 rounded-full shadow-sm"></span> มีผลต่อสุขภาพ
-              </div>
+      <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
+        <h3 class="text-gray-600 text-sm font-medium">ระยะพยากรณ์</h3>
+        <p class="text-3xl font-bold text-blue-600 mt-2">14 วัน</p>
+        <p class="text-gray-500 text-sm">อัปเดตทุกชั่วโมง</p>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
+        <h3 class="text-gray-600 text-sm font-medium">พื้นที่ครอบคลุม</h3>
+        <p class="text-3xl font-bold text-purple-600 mt-2">14 จังหวัด</p>
+        <p class="text-gray-500 text-sm">ภาคใต้ของไทย</p>
+      </div>
+    </section>
+
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+
+        <!-- เลือกวันที่ -->
+        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
+            <i class="ph ph-calendar-minus text-blue-600 text-2xl"></i>
+            เลือกวันที่พยากรณ์
+          </h2>
+          <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            {% for day in range(14) %}
+              {% set date_label = (today + timedelta(days=day)).strftime('%d %b') %}
+              <button
+                onclick="changeDay({{ day }})"
+                class="px-4 py-2 rounded-lg border text-sm whitespace-nowrap transition
+                  {% if day == current_day %}
+                    bg-blue-600 text-white border-blue-600 shadow-md
+                  {% else %}
+                    bg-white hover:bg-blue-50 border-gray-300 text-gray-700
+                  {% endif %}">
+                {{ date_label }}
+              </button>
+            {% endfor %}
           </div>
+        </div>
+
+        <!-- ระดับคุณภาพอากาศ -->
+        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
+            <i class="ph ph-wind text-green-600 text-2xl"></i>
+            ระดับคุณภาพอากาศ
+          </h2>
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-blue-400 rounded"></span> ดีมาก (0-15)</div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-green-400 rounded"></span> ดี (16-25)</div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-yellow-400 rounded"></span> ปานกลาง (26-37)</div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-orange-400 rounded"></span> เริ่มมีผล (38-50)</div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-red-400 rounded"></span> มีผลต่อสุขภาพ (>50)</div>
+          </div>
+        </div>
+
       </div>
-  </div>
 
-
-  <!-- JavaScript for Day Selector -->
-  <script>
-      function changeDay(day) {
-          // Reload page with new select_day parameter
-          const url = new URL(window.location.href);
-          url.searchParams.set('select_day', day);
-          window.location.href = url.toString();
-      }
-  </script>
-
-  <!-- Data Table -->
-  <div class="border border-gray-200 shadow-xl rounded-2xl bg-white overflow-hidden">
-    <div class="p-4 border-b border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-800">ข้อมูลรายจังหวัด</h2>
+      <!-- Map -->
+      <div class="lg:col-span-2 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+        {{ map_html|safe }}
+      </div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="table w-full">
-        <thead>
-          <tr class="bg-gray-100 text-gray-700 text-sm uppercase">
-            <th class="text-left px-4 py-3">จังหวัด</th>
-            <th class="text-center px-4 py-3">ล่าสุด</th>
-            <th class="text-center px-4 py-3">คาดการณ์ถัดไป</th>
-            <th class="text-center px-4 py-3">เฉลี่ย 24 ชม.</th>
-            <th class="text-center px-4 py-3">ข้อมูลกราฟ</th>
-          </tr>
-        </thead>
-        <tbody class="text-gray-800 text-sm">
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium">สงขลา</td>
-            <td class="text-center px-4 py-3">32.1</td>
-            <td class="text-center px-4 py-3">33.0</td>
-            <td class="text-center px-4 py-3">31.5</td>
-            <td class="text-center px-4 py-3 text-blue-600 hover:underline cursor-pointer">ดูกราฟ</td>
-          </tr>
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium">ปัตตานี</td>
-            <td class="text-center px-4 py-3">28.4</td>
-            <td class="text-center px-4 py-3">29.0</td>
-            <td class="text-center px-4 py-3">27.9</td>
-            <td class="text-center px-4 py-3 text-blue-600 hover:underline cursor-pointer">ดูกราฟ</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
+    <!-- Table -->
+    <div class="mt-8">
+      <div class="bg-white shadow-xl border border-gray-100 rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-4 text-left">สถานี</th>
+                <th class="px-4 py-4 text-center">ล่าสุด (µg/m³)</th>
+                <th class="px-4 py-4 text-center">คาดการณ์</th>
+                <th class="px-4 py-4 text-center">เฉลี่ย 24 ชม.</th>
+                <th class="px-4 py-4 text-center">ข้อมูล</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {%if models_list %}
+                {% for model in models_list %}
+                <tr class="hover:bg-blue-50">
+                  <td class="px-6 py-4">{{ station_descriptions[model.station_code] }}</td>
+                  <td class="text-center"><div class="badge badge-success">{{ "%0.2f" | format(model.PM_2_5) }}</div></td>
+                  <td class="text-center"><div class="badge badge-warning">33.0</div></td>
+                  <td class="text-center">31.5</td>
+                  <td class="text-center"><button class="btn btn-sm btn-ghost"><i class="ph ph-chart-bar"></i></button></td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
+<!-- JavaScript -->
+<script>
+  function changeDay(day) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('select_day', day);
+    window.location.href = url.toString();
+  }
+</script>
 {% endblock content %}
-
-
