@@ -29,7 +29,8 @@ def create_app():
             app.config[key] = int(value)
 
         if value.strip() and value.strip()[0] in ["[", "{"]:
-            app.config[key] = json.loads(value)
+            # app.config[key] = json.loads(value)
+            app.config[key] = value
 
     app.config.from_envvar("PODSAAD_SETTING", silent=True)
 
