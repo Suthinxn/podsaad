@@ -121,61 +121,64 @@ def get_collection_class(station_code):
         "temperature": FloatField(),
         "humidity": FloatField(),
         "pressure": FloatField(),
+        "day_of_week_sin" : FloatField(),
+        "day_of_week_cos" : FloatField(),
+        "month_sin" : FloatField(),
+        "month_cos" : FloatField(),
     }
     return type(f"PM25Interpolated_{station_code}", (Document,), class_attrs)
 
 @module.route("/predict", methods=["GET"])
 def forecast():
-    all_results = []
-
     stations = [
-    "119t","118t","93t","89t","62t","121t","o73","120t","43t",
-    "63t","78t","o70","44t","o28","42t",
+        "119t","118t","93t","89t","62t","121t","o73","120t","43t",
+        "63t","78t","o70","44t","o28","42t",
     ]
-
+   
+    all_results = []
+    
     for station_code in stations:
+        # --- ใช้ get_collection_class เพื่อดึง collection ที่ถูกต้อง ---
         CollectionClass = get_collection_class(station_code)
-        # print(f"Debug Collection {CollectionClass}")
-        # --- ดึงข้อมูลล่าสุด 30 วัน (เรียงจากเก่า → ใหม่) ---
+        
+        # --- ดึงข้อมูลล่าสุด LOOKBACK วัน (เรียงจากเก่า → ใหม่) ---
         records = list(
             CollectionClass.objects().order_by("timestamp").limit(LOOKBACK)
         )
+        
         if len(records) < LOOKBACK:
-            continue  # ข้ามถ้าข้อมูลไม่ครบ 30 วัน
-
-        # print(f"Debug {records}")
-        # --- สร้าง DataFrame ---
+            continue  # ข้ามถ้าข้อมูลไม่ครบ
+        
+        # --- สร้าง DataFrame จากข้อมูลจริง ---
         df_daily = pd.DataFrame([{f: getattr(r, f) for f in FEATURES + ["timestamp"]} for r in records])
         df_daily["timestamp"] = pd.to_datetime(df_daily["timestamp"])
         df_daily = df_daily.sort_values("timestamp").set_index("timestamp")
-
-        # --- ตรวจสอบ NaN ---
+        
+        # --- ตรวจสอบและจัดการ NaN ---
         if df_daily[FEATURES].isnull().any().any():
             df_daily[FEATURES] = df_daily[FEATURES].interpolate(method='linear').ffill().bfill()
-
+        
         # --- Scale input features ---
         try:
-            last_window_scaled = scaler.transform(df_daily[FEATURES])
+            last_window_scaled = feature_scaler.transform(df_daily[FEATURES])
         except Exception as e:
             print(f"Error scaling data for {station_code}: {e}")
             continue
-
+        
         # --- Prepare tensor ---
         input_tensor = torch.tensor(last_window_scaled.astype(np.float32), dtype=torch.float32).unsqueeze(0)
-
+        
         # --- Prediction ---
         with torch.no_grad():
             prediction_scaled = model(input_tensor).cpu().numpy().flatten()
-
-        # --- Inverse transform prediction ---
-        dummy_features = np.zeros((HORIZON, len(FEATURES)))
-        dummy_features[:, FEATURES.index("PM_2_5")] = prediction_scaled
-        forecast_real = scaler.inverse_transform(dummy_features)[:, FEATURES.index("PM_2_5")]
-
+        
+        # --- Inverse transform prediction (target only) ---
+        forecast_real = target_scaler.inverse_transform(prediction_scaled.reshape(1, -1)).flatten()
+        
         all_results.append({
             "station_code": station_code,
             "forecast_days": HORIZON,
             "forecast": forecast_real.tolist(),
         })
-
+    
     return jsonify({"result": all_results})

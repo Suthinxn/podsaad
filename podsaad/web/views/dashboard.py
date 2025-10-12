@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, current_app, request
+from flask import Blueprint, render_template, jsonify, current_app, request, redirect
 from flask_login import login_required
 from datetime import date, datetime, timedelta
 
@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 
 from podsaad.web.utils.get_heatmap import get_pm25_level, get_pm25_color, create_map
 from podsaad import models
+import json
 
 import warnings
 
@@ -53,7 +54,7 @@ def index():
         if model_class is None:
             continue
 
-        latest_record = model_class.objects(timestamp="2025-09-06").first() 
+        latest_record = model_class.objects(timestamp="2025-10-11").first() 
         if latest_record:
             models_list.append(latest_record)
             # print(f"DEBUG Collection : {model_class}")
@@ -80,26 +81,26 @@ def index():
 #         return 1.0  # แดงเข้ม
 
 
-@module.route("/get_data")
-def get_data():
-    raw_data = None
+# @module.route("/get_data")
+# def get_data():
+#     raw_data = None
 
-    # Call API
-    config = {
-        "API_DHARA": current_app.config.get("API_DHARA"),
-        "SOURCE": current_app.config.get("SOURCE"),
-    }
+#     # Call API
+#     config = {
+#         "API_DHARA": current_app.config.get("API_DHARA"),
+#         "SOURCE": current_app.config.get("SOURCE"),
+#     }
 
-    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow = today + timedelta(days=1)
+#     today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+#     tomorrow = today + timedelta(days=1)
 
-    api_data = fetch_data(today, tomorrow, config)
-    df = get_raw_data(api_data)
-    data_by_station = filter_by_station(df)
+#     api_data = fetch_data(today, tomorrow, config)
+#     df = get_raw_data(api_data)
+#     data_by_station = filter_by_station(df)
 
-    print(">>>\n", data_by_station)
+#     print(">>>\n", data_by_station)
 
-    return data_by_station
+#     return data_by_station
 
 
 @module.route("/top10_province", methods=["GET", "POST"])
@@ -109,4 +110,60 @@ def top10_province():
 
 @module.route("/graph_infomation/<station>", methods=["GET", "POST"])
 def graph_infomation(station):
-    return render_template("/dashboard/graph_infomation.html")
+    print(f"Station : {station}")
+
+    today = datetime.today()    
+    days_ago = today - timedelta(days=14)
+    # print(f"Debug {seven_days_ago}")
+
+    today_str = today.strftime("%Y-%m-%d")
+    days_ago_str = days_ago.strftime("%Y-%m-%d")
+
+    collection_name = f"PM25Interpolated{station}"
+    model = getattr(models, collection_name, None)
+
+    print(f"DEBUG MODEL : {model}")
+
+    # if not model:
+    #     return redirect("dashboard.index")  # กรณี model ไม่พบ
+
+    data_last_7_days = model.objects(
+        timestamp__gte=days_ago_str,
+        timestamp__lte=today_str
+    ).order_by('-timestamp')
+
+    timestamps = []
+
+    for data in data_last_7_days:
+        timestamps.append(data.timestamp)
+
+    print(f"DEBUG timestamps : {timestamps}")
+    
+    pm25_list = []
+    for data in data_last_7_days:
+        pm25_list.append(data.PM_2_5)
+
+    print(f"DEBUG pm2.5 : {pm25_list}")
+
+    chart_data = {
+        'series': [{
+            'name': 'PM2.5',
+            'data': pm25_list
+        }],
+        'categories': timestamps
+    }
+
+    json_data = json.dumps(chart_data)
+
+    return render_template("/dashboard/graph_infomation.html", chart_json=json_data)
+
+# @module.route('/data')
+# def get_chart_data():
+
+#     data = {
+#         'series': [
+#             {'name': 'Sales', 'data': [30, 40, 45, 50, 49, 60, 70, 91, 125]}
+#         ],
+#         'categories': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+#     }
+#     return jsonify(data)
