@@ -16,3 +16,7 @@ class PM25Interpolated43t(Document):
     temperature = FloatField()
     humidity = FloatField()
     pressure = FloatField()
+    day_of_week_sin = FloatField()
+    day_of_week_cos = FloatField()
+    month_sin = FloatField()
+    month_cos = FloatField()
