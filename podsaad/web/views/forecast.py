@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import torch
 import torch.nn as nn
+import statsmodels.api as sm
 
 from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_station
 from joblib import load
@@ -20,6 +21,9 @@ FEATURES = [
     "day_of_week_sin", "day_of_week_cos",
     "month_sin", "month_cos"
 ]
+
+SARIMAX_FEATURES = ["PM_1","PM_0_1","humidity","pressure","temperature",
+                    "day_of_week_sin","day_of_week_cos","month_sin","month_cos"] 
 
 
 # ---------------- โมเดล ----------------
@@ -55,6 +59,7 @@ model = ConvBiLSTM(input_dim=len(FEATURES), lookback=LOOKBACK, horizon=HORIZON)
 model.load_state_dict(torch.load("models_pytorch/best_model.pt", map_location="cpu"))
 model.eval()
 
+sarimax_model = load("models_sarimax/best_model.pkl")
 
 @module.route("/test", methods=["GET"])
 def forecast_test():
@@ -104,7 +109,47 @@ def forecast_test():
 
     return jsonify({"result": all_results})
 
+@module.route("/test_sarimax", methods=["GET"])
+def forecast_test_sarimax():
+    stations = [
+    "119t","118t","93t","89t","62t","121t","o73","120t","43t",
+    "63t","78t","o70","44t","o28","42t",
+    ]
+    end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    dates = pd.date_range(end=end_date, periods=LOOKBACK, freq="D")
 
+    all_results = []
+
+    for station_code in stations:
+        df_daily = pd.DataFrame({
+            "timestamp": dates,
+            "PM_2_5": np.random.uniform(10, 100, size=LOOKBACK),
+            "PM_1": np.random.uniform(5, 80, size=LOOKBACK),
+            "PM_0_1": np.random.uniform(1, 50, size=LOOKBACK),
+            "humidity": np.random.uniform(40, 90, size=LOOKBACK),
+            "pressure": np.random.uniform(950, 1020, size=LOOKBACK),
+            "temperature": np.random.uniform(20, 35, size=LOOKBACK),
+            "day_of_week_sin": np.random.uniform(-1, 1, size=LOOKBACK),
+            "day_of_week_cos": np.random.uniform(-1, 1, size=LOOKBACK),
+            "month_sin": np.random.uniform(-1, 1, size=LOOKBACK),
+            "month_cos": np.random.uniform(-1, 1, size=LOOKBACK),
+        }).set_index("timestamp")
+
+        exog_future = df_daily[SARIMAX_FEATURES].iloc[-HORIZON:]
+
+        forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future)
+        forecast_mean = forecast.predicted_mean
+        # forecast_mean = forecast_mean.clip(lower=0)
+
+        forecast_mean.index = pd.date_range(end=end_date + pd.Timedelta(days=HORIZON-1), periods=HORIZON)
+        
+        all_results.append({
+            "station_code": station_code,
+            "forecast_days": HORIZON,
+            "forecast": forecast_mean.tolist(),
+        })
+
+    return jsonify({"result": all_results})
 
 def get_collection_class(station_code):
     """คืน class MongoEngine ของแต่ละ collection"""
