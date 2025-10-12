@@ -103,10 +103,12 @@
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-4 text-left">สถานี</th>
-                <th class="px-4 py-4 text-center">ล่าสุด (µg/m³)</th>
-                <th class="px-4 py-4 text-center">คาดการณ์</th>
-                <th class="px-4 py-4 text-center">เฉลี่ย 24 ชม.</th>
-                <th class="px-4 py-4 text-center">ข้อมูล</th>
+                <th class="px-4 py-4 text-center">PM2.5 (µg/m³)</th>
+                <th class="px-4 py-4 text-center">PM1 (µg/m³)</th>
+                <th class="px-4 py-4 text-center">PM0.1 (µg/m³)</th>
+                <th class="px-4 py-4 text-center">อุณหภูมิ (°C)</th>
+                <th class="px-4 py-4 text-center">ความชื้น (%)</th>
+                <th class="px-4 py-4 text-center">รายละเอียด</th>
               </tr>
             </thead>
 
@@ -115,10 +117,63 @@
                 {% for model in models_list %}
                 <tr class="hover:bg-blue-50">
                   <td class="px-6 py-4">{{ station_descriptions[model.station_code] }}</td>
-                  <td class="text-center"><div class="badge badge-success">{{ "%0.2f" | format(model.PM_2_5) }}</div></td>
-                  <td class="text-center"><div class="badge badge-warning">33.0</div></td>
-                  <td class="text-center">31.5</td>
-                  <td class="text-center"><button class="btn btn-sm btn-ghost"><i class="ph ph-chart-bar"></i></button></td>
+                  <!-- PM2.5 -->
+                  <td class="text-center">
+                    {% if model.PM_2_5 is not none %}
+                      {% set pm25 = model.PM_2_5 | float %}
+                      
+                      {% if 0 <= pm25 <= 25 %}
+                        {% set bg_class = "bg-blue-500" %}
+                      {% elif 26 <= pm25 <= 37 %}
+                        {% set bg_class = "bg-green-500" %}
+                      {% elif 38 <= pm25 <= 50 %}
+                        {% set bg_class = "bg-yellow-400" %}
+                      {% elif 51 <= pm25 <= 90 %}
+                        {% set bg_class = "bg-orange-500" %}
+                      {% else %}
+                        {% set bg_class = "bg-red-500" %}
+                      {% endif %}
+
+                      <div class="text-white px-2 py-1 w-1/3 rounded mx-auto {{ bg_class }}">
+                        {{ pm25 | round(2) }}
+                      </div>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <!-- PM1 -->
+                  <td class="text-center">
+                      {% if model.PM_1 is not none %}
+                      {{ "%0.2f" | format(model.PM_1) }}
+                      {% else %}
+                      -
+                      {% endif %}
+                  </td>
+                  <!-- PM0.1 -->
+                  <td class="text-center">
+                    {% if model.PM_0_1 is not none %}
+                      {{ "%0.2f" | format(model.PM_0_1) }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <!-- temperature -->
+                  <td class="text-center">
+                    {% if model.temperature %}
+                      {{ "%0.2f" | format(model.temperature) }}
+                    {% endif %}
+                  </td>
+                  <!-- humidity -->
+                  <td class="text-center">
+                    {% if model.humidity %}
+                      {{ "%0.2f" | format(model.humidity) }}
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                      <a class="btn btn-ghost" href="{{ url_for('dashboard.graph_infomation', station=model.station_code) }}">
+                        <i class="ph ph-chart-bar text-xl"></i>
+                      </a>
+                  </td>
                 </tr>
                 {% endfor %}
               {% endif %}
@@ -126,6 +181,8 @@
           </table>
         </div>
       </div>
+
+      
     </div>
 
   </div>

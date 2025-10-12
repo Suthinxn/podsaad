@@ -107,6 +107,6 @@ def top10_province():
     return render_template("/dashboard/top10_province.html")
 
 
-@module.route("/graph_infomation", methods=["GET", "POST"])
-def graph_infomation():
+@module.route("/graph_infomation/<station>", methods=["GET", "POST"])
+def graph_infomation(station):
     return render_template("/dashboard/graph_infomation.html")
