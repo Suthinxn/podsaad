@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="m-6">
-  <h1 class="text-2xl font-bold mb-4">ข้อมูล PM 2.5 ใน 7 วันล่าสุด</h1>
-	<h2 class="text-xl mb-4">จังหวัดสงขลา สถานีเทศบาลนครหาดใหญ่</h2>
+  <h1 class="text-2xl font-bold mb-4">ข้อมูล PM 2.5 ใน 14 วันย้อนหลัง</h1>
+	<h2 class="text-xl mb-4">{{ station_descriptions[model.station_code] }}</h2>
   <div id="chart"></div>
 </div>
 {% endblock %}
@@ -16,6 +16,15 @@
         // Parse the JSON data passed from Flask
         const chartData = JSON.parse('{{ chart_json | safe }}'); 
 
+        // สร้าง array สีจากค่า PM2.5
+        const barColors = chartData.series[0].data.map(value => {
+            if(value <= 25) return '#03a9f4';
+            if(value <= 37) return '#259b24';
+            if(value <= 50) return '#ffeb3b';
+            if(value <= 90) return '#ff5722';
+            return '#e51c23';
+        });
+
         var options = {
             chart: {
                 type: 'bar',
@@ -24,6 +33,15 @@
             series: chartData.series,
             xaxis: {
                 categories: chartData.categories
+            },
+            plotOptions: {
+                bar: {
+                    distributed: true
+                }
+            },
+            colors: barColors, // ใส่ array แทน function
+            dataLabels: {
+                enabled: true
             }
         };
 
