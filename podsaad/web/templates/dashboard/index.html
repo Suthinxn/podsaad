@@ -28,13 +28,38 @@
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
       <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
         <h3 class="text-gray-600 text-sm font-medium">สถานะปัจจุบัน</h3>
-        <p class="text-3xl font-bold text-green-600 mt-2">ดี</p>
-        <p class="text-gray-500 text-sm">เฉลี่ย 30.2 µg/m³</p>
+          {% if avg_pm25 is not none %}
+              {% set pm25 = avg_pm25 | float %}
+
+              {% if 0 <= pm25 <= 25 %}
+                  {% set color_class = "text-green-500" %}
+                  {% set level_text = "ดีมาก" %}
+              {% elif 26 <= pm25 <= 37 %}
+                  {% set color_class = "text-lime-500" %}
+                  {% set level_text = "ดี" %}
+              {% elif 38 <= pm25 <= 50 %}
+                  {% set color_class = "text-yellow-500" %}
+                  {% set level_text = "ปานกลาง" %}
+              {% elif 51 <= pm25 <= 90 %}
+                  {% set color_class = "text-orange-500" %}
+                  {% set level_text = "เริ่มมีผล" %}
+              {% else %}
+                  {% set color_class = "text-red-500" %}
+                  {% set level_text = "มีผลต่อสุขภาพ" %}
+              {% endif %}
+
+              <p class="text-3xl font-bold {{ color_class }} mt-2">
+                  {{ level_text }}
+              </p>
+              <p class="text-gray-500 text-sm">เฉลี่ย {{ pm25 | round(2) }} µg/m³</p>
+          {% else %}
+              <p class="text-gray-500 text-sm">ไม่มีข้อมูล</p>
+          {% endif %}
       </div>
       <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
         <h3 class="text-gray-600 text-sm font-medium">ระยะพยากรณ์</h3>
         <p class="text-3xl font-bold text-blue-600 mt-2">14 วัน</p>
-        <p class="text-gray-500 text-sm">อัปเดตทุกชั่วโมง</p>
+        <p class="text-gray-500 text-sm">อัปเดตข้อมูลทุกวันเวลา 00:00 น.</p>
       </div>
       <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
         <h3 class="text-gray-600 text-sm font-medium">พื้นที่ครอบคลุม</h3>
@@ -44,41 +69,34 @@
     </section>
 
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[80vh]">
 
-  <!-- Layout ให้ทั้งสองฝั่งสูงเท่ากัน -->
-  <div class="flex flex-col space-y-6 h-full lg:h-[calc(100%)]">
+  <!-- Sidebar -->
+  <div class="flex flex-col space-y-6 h-full">
 
     <!-- Card: เลือกโมเดล -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 transition hover:shadow-xl">
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition">
       <h2 class="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-800">
         <i class="ph ph-brain text-blue-600 text-2xl"></i>
         เลือกโมเดล
       </h2>
       <div class="flex gap-3 flex-wrap">
-        <a href="{{ url_for('dashboard.index', select_model='Conv1D+BiLSTM') }}"
-           class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
-           {% if select_model == 'Conv1D+BiLSTM' %}
-             bg-blue-600 text-white border-blue-600 shadow-md
-           {% else %}
-             bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700
-           {% endif %}">
-          Conv1D+BiLSTM
-        </a>
-        <a href="{{ url_for('dashboard.index', select_model='SARIMAX') }}"
-           class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
-           {% if select_model == 'SARIMAX' %}
-             bg-blue-600 text-white border-blue-600 shadow-md
-           {% else %}
-             bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700
-           {% endif %}">
-          SARIMAX
-        </a>
+        {% for model_name in ['Conv1D+BiLSTM','SARIMAX'] %}
+          <a href="{{ url_for('dashboard.index', select_model=model_name) }}"
+             class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
+             {% if select_model == model_name %}
+               bg-blue-600 text-white border-blue-600 shadow-md
+             {% else %}
+               bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700
+             {% endif %}">
+            {{ model_name }}
+          </a>
+        {% endfor %}
       </div>
     </div>
 
-    <!-- เลือกวันที่ -->
-    <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+    <!-- Card: เลือกวันที่ -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition">
       <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
         <i class="ph ph-calendar-minus text-blue-600 text-2xl"></i>
         เลือกวันที่พยากรณ์
@@ -101,7 +119,7 @@
     </div>
 
     <!-- Card: ระดับคุณภาพอากาศ -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 transition hover:shadow-xl flex-grow">
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition flex-grow">
       <h2 class="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-800">
         <i class="ph ph-wind text-green-600 text-2xl"></i>
         ระดับคุณภาพอากาศ
@@ -117,11 +135,21 @@
 
   </div>
 
-  <!-- Map -->
-  <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition hover:shadow-xl h-fit">
-    {{ map_html | safe }}
+  <!-- Main Map -->
+  <div class="lg:col-span-2 flex flex-col space-y-6">
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition flex-grow">
+      <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-800">
+        <i class="ph ph-calendar-check text-blue-600 text-2xl"></i>
+        พยากรณ์วันที่ {{ selected_date_label }}
+      </h2>
+    </div>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition h-fit">
+      {{ map_html | safe }}
+    </div>
   </div>
+
 </div>
+
 
     <!-- Table -->
     <div class="mt-8">

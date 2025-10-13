@@ -15,6 +15,28 @@ from folium.raster_layers import ImageOverlay
 import branca.colormap as cm
 
 
+def get_station_dexcriptions():
+
+    station_descriptions = {
+    "119t": "สวนสาธารณะธารา ต.ปากน้ำ อ.เมือง, กระบี่",
+    "118t": "สนามกีฬา จ.ชุมพร ต.ท่าตะเภา อ.เมือง, จ.ชุมพร",
+    "93t": "วิทยาลัยสารพัดช่างตรัง ต.นาตาล่วง อ.เมือง, ตรัง",
+    "89t": "ศูนย์ฟื้นฟูสุขภาพผู้สูงอายุ ต.คลัง อ.เมือง, นครศรีธรรมราช",
+    "62t": "ศาลากลางจังหวัดนราธิวาส ต.บางนาค อ.เมือง, นราธิวาส",
+    "121t": "ศูนย์ป่าไม้จังหวัดปัตตานี ต.รูสะมิแล อ.เมือง, ปัตตานี",
+    "o73": "ศูนย์ราชการจังหวัดพังงา ต.ถ้ำน้ำผุด อ.เมือง, พังงา",
+    "120t": "สนามกีฬากลางจังหวัดพัทลุง ต.เขาเจียก อ.เมือง, พัทลุง",
+    "43t": "ศูนย์บริการสาธารณสุขเทศบาลภูเก็ต ต.ตลาดใหญ่ อ.เมือง, ภูเก็ต",
+    "63t": "สนามโรงพิธีช้างเผือก ต.สะเตง อ.เมือง, ยะลา",
+    "78t": "ศูนย์พัฒนาเด็กเล็กเทศบาลเมืองเบตง ต.เบตง อ.เบตง, ยะลา",
+    "o70": "สำนักงานเทศบาลเมืองระนอง ต.เขานิเวศน์ อ.เมือง, ระนอง",
+    "44t": "เทศบาลนครหาดใหญ่ ต.หาดใหญ่ อ.หาดใหญ่, สงขลา",
+    "o28": "โรงเรียนชุมชนบ้านปาดัง ต.ปาดังเบซาร์ อ.สะเดา, จ.สงขลา",
+    "42t": "สำนักงานสิ่งแวดล้อมภาคที่ 14 ต.มะขามเตี้ย อ.เมือง, สุราษฎร์ธานี",
+    }
+
+    return station_descriptions
+
 def get_pm25_level(value):
     if value <= 25:
         return "คุณภาพดีมาก"
@@ -27,7 +49,6 @@ def get_pm25_level(value):
     else:
         return "มีผลกระทบต่อสุขภาพมาก"
 
-
 def get_pm25_color(value):
     if value <= 25:
         return "#0066FF"
@@ -39,7 +60,6 @@ def get_pm25_color(value):
         return "#FF9900"
     else:
         return "#FF0000"
-
 
 def get_data_json(model):
     
@@ -209,12 +229,9 @@ def generate_heatmap_image(select_day, model):
         actual_max,
     )
 
-
+# Main
 def create_map(select_day, model):
-
-    # print(f"---Create BiLSTM MAP---")
-    # สร้างแผนที่
-    
+    # Create Map
     img_data, southern_features, df_pm25, bounds, vmin, vmax = generate_heatmap_image(
         select_day, model
     )

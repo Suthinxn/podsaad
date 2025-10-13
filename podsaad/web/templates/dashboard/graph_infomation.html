@@ -1,73 +1,140 @@
 {% extends "/base/default_page.html" %}
 
-{% block title %} PODSAAD {% endblock title %}
+{% block title %}PODSAAD{% endblock title %}
 
 {% block content %}
-<div class="m-6">
-  <h1 class="text-2xl font-bold mb-4">ข้อมูล PM 2.5 ใน 14 วันย้อนหลัง</h1>
-	<h2 class="text-xl mb-4">{{ station_descriptions[model.station_code] }}</h2>
-  <div id="chart"></div>
-  <div>
-        <div class="border-t border-gray-200 p-4">
-      <div class="flex justify-between text-sm font-medium text-gray-700">
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-3 bg-blue-400 rounded-full"></span> ดีมาก
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-3 bg-green-400 rounded-full"></span> ดี
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-3 bg-yellow-400 rounded-full"></span> ปานกลาง
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-3 bg-orange-400 rounded-full"></span> เริ่มมีผล
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-6 h-3 bg-red-400 rounded-full"></span> มีผลต่อสุขภาพ
-        </div>
+<div class="m-6 space-y-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-1">
+      ข้อมูล PM 2.5 ย้อนหลัง 14 วัน
+    </h1>
+    <h2 class="text-lg md:text-xl text-gray-600 font-medium">
+      {{ station_descriptions[model.station_code] }}
+    </h2>
+  </div>
+
+  <!-- Chart Card -->
+  <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8">
+    <div id="chart"></div>
+  </div>
+
+<!-- Legend Horizontal Card Style (Static, No Animation) -->
+<div class="bg-white rounded-3xl shadow-lg p-6 md:p-8">
+  <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-5">
+    ระดับคุณภาพอากาศ
+  </h3>
+  <div class="flex flex-col md:flex-row gap-4">
+    <!-- ดีมาก -->
+    <div class="flex items-center gap-3 flex-1 p-3 rounded-xl bg-blue-50">
+      <span class="w-6 h-6 rounded-full bg-blue-400 flex-shrink-0"></span>
+      <div>
+        <p class="text-sm md:text-base font-medium text-blue-700">ดีมาก</p>
+        <p class="text-xs text-blue-500">
+          PM2.5 ≤ 25 µg/m³
+        </p>
       </div>
+    </div>
+
+    <!-- ดี -->
+    <div class="flex items-center gap-3 flex-1 p-3 rounded-xl bg-green-50">
+      <span class="w-6 h-6 rounded-full bg-green-400 flex-shrink-0"></span>
+      <div>
+        <p class="text-sm md:text-base font-medium text-green-700">ดี</p>
+        <p class="text-xs text-green-500">
+          PM2.5 26-37 µg/m³
+        </p>
+      </div>
+    </div>
+
+    <!-- ปานกลาง -->
+    <div class="flex items-center gap-3 flex-1 p-3 rounded-xl bg-yellow-50">
+      <span class="w-6 h-6 rounded-full bg-yellow-400 flex-shrink-0"></span>
+      <div>
+        <p class="text-sm md:text-base font-medium text-yellow-700">ปานกลาง</p>
+        <p class="text-xs text-yellow-500">
+          PM2.5 38-50 µg/m³
+        </p>
+      </div>
+    </div>
+
+    <!-- เริ่มมีผล -->
+    <div class="flex items-center gap-3 flex-1 p-3 rounded-xl bg-orange-50">
+      <span class="w-6 h-6 rounded-full bg-orange-400 flex-shrink-0"></span>
+      <div>
+        <p class="text-sm md:text-base font-medium text-orange-700">เริ่มมีผล</p>
+        <p class="text-xs text-orange-500">
+          PM2.5 51-90 µg/m³
+        </p>
+      </div>
+    </div>
+
+    <!-- มีผลต่อสุขภาพ -->
+    <div class="flex items-center gap-3 flex-1 p-3 rounded-xl bg-red-50">
+      <span class="w-6 h-6 rounded-full bg-red-500 flex-shrink-0"></span>
+      <div>
+        <p class="text-sm md:text-base font-medium text-red-700">มีผลต่อสุขภาพ</p>
+        <p class="text-xs text-red-500">
+          PM2.5 > 90 µg/m³
+        </p>
+      </div>
+    </div>
   </div>
 </div>
 
+
+</div>
 
 {% endblock %}
 
 {% block js %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script>
-        // Parse the JSON data passed from Flask
-        const chartData = JSON.parse('{{ chart_json | safe }}'); 
+<script>
+    // Parse JSON data from Flask
+    const chartData = JSON.parse('{{ chart_json | safe }}'); 
 
-        // สร้าง array สีจากค่า PM2.5
-        const barColors = chartData.series[0].data.map(value => {
-            if(value <= 25) return '#03a9f4';
-            if(value <= 37) return '#259b24';
-            if(value <= 50) return '#ffeb3b';
-            if(value <= 90) return '#ff5722';
-            return '#e51c23';
-        });
+    // Set colors based on PM2.5 value
+    const barColors = chartData.series[0].data.map(value => {
+        if(value <= 25) return '#03a9f4';
+        if(value <= 37) return '#259b24';
+        if(value <= 50) return '#ffeb3b';
+        if(value <= 90) return '#ff5722';
+        return '#e51c23';
+    });
 
-        var options = {
-            chart: {
-                type: 'bar',
-                height: 350
-            },
-            series: chartData.series,
-            xaxis: {
-                categories: chartData.categories
-            },
-            plotOptions: {
-                bar: {
-                    distributed: true
-                }
-            },
-            colors: barColors, // ใส่ array แทน function
-            dataLabels: {
-                enabled: true
+    const options = {
+        chart: {
+            type: 'bar',
+            height: 380,
+            toolbar: { show: false }
+        },
+        series: chartData.series,
+        xaxis: {
+            categories: chartData.categories,
+            labels: { rotate: -45 }
+        },
+        plotOptions: {
+            bar: {
+                distributed: true,
+                borderRadius: 6,
+                columnWidth: '50%',
             }
-        };
+        },
+        colors: barColors,
+        dataLabels: {
+            enabled: true,
+            style: {
+                colors: ['#000']
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) { return val + " µg/m³"; }
+            }
+        }
+    };
 
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
-    </script>
+    const chart = new ApexCharts(document.querySelector("#chart"), options);
+    chart.render();
+</script>
 {% endblock js %}
