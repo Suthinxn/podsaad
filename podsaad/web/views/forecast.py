@@ -59,6 +59,8 @@ model = ConvBiLSTM(input_dim=len(FEATURES), lookback=LOOKBACK, horizon=HORIZON)
 model.load_state_dict(torch.load("models_pytorch/best_model.pt", map_location="cpu"))
 model.eval()
 
+    # โหลด scaler ที่ใช้ตอน train
+scaler_sarimax = load("models_sarimax/exog_scaler.pkl")
 sarimax_model = load("models_sarimax/best_model.pkl")
 
 @module.route("/test", methods=["GET"])
@@ -112,15 +114,18 @@ def forecast_test():
 @module.route("/test_sarimax", methods=["GET"])
 def forecast_test_sarimax():
     stations = [
-    "119t","118t","93t","89t","62t","121t","o73","120t","43t",
-    "63t","78t","o70","44t","o28","42t",
+        "119t","118t","93t","89t","62t","121t","o73","120t","43t",
+        "63t","78t","o70","44t","o28","42t",
     ]
+
+    # วันที่ล่าสุดและช่วงเวลา
     end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     dates = pd.date_range(end=end_date, periods=LOOKBACK, freq="D")
 
     all_results = []
 
     for station_code in stations:
+
         df_daily = pd.DataFrame({
             "timestamp": dates,
             "PM_2_5": np.random.uniform(10, 100, size=LOOKBACK),
@@ -137,12 +142,17 @@ def forecast_test_sarimax():
 
         exog_future = df_daily[SARIMAX_FEATURES].iloc[-HORIZON:]
 
-        forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future)
-        forecast_mean = forecast.predicted_mean
-        # forecast_mean = forecast_mean.clip(lower=0)
+        # Scale ด้วย scaler เดิมที่ fit จาก train
+        exog_future_scaled = scaler_sarimax.transform(exog_future)
 
-        forecast_mean.index = pd.date_range(end=end_date + pd.Timedelta(days=HORIZON-1), periods=HORIZON)
-        
+        forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future_scaled)
+        forecast_mean = forecast.predicted_mean
+
+        forecast_mean.index = pd.date_range(
+            end=end_date + pd.Timedelta(days=HORIZON-1),
+            periods=HORIZON
+        )
+
         all_results.append({
             "station_code": station_code,
             "forecast_days": HORIZON,
@@ -150,6 +160,7 @@ def forecast_test_sarimax():
         })
 
     return jsonify({"result": all_results})
+
 
 def get_collection_class(station_code):
     """คืน class MongoEngine ของแต่ละ collection"""
