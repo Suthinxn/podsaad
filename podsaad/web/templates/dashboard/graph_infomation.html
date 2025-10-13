@@ -7,7 +7,29 @@
   <h1 class="text-2xl font-bold mb-4">ข้อมูล PM 2.5 ใน 14 วันย้อนหลัง</h1>
 	<h2 class="text-xl mb-4">{{ station_descriptions[model.station_code] }}</h2>
   <div id="chart"></div>
+  <div>
+        <div class="border-t border-gray-200 p-4">
+      <div class="flex justify-between text-sm font-medium text-gray-700">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-blue-400 rounded-full"></span> ดีมาก
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-green-400 rounded-full"></span> ดี
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-yellow-400 rounded-full"></span> ปานกลาง
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-orange-400 rounded-full"></span> เริ่มมีผล
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-3 bg-red-400 rounded-full"></span> มีผลต่อสุขภาพ
+        </div>
+      </div>
+  </div>
 </div>
+
+
 {% endblock %}
 
 {% block js %}
@@ -48,4 +70,4 @@
         var chart = new ApexCharts(document.querySelector("#chart"), options);
         chart.render();
     </script>
-{% endblock %}
+{% endblock js %}

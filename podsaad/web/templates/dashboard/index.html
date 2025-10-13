@@ -44,59 +44,101 @@
     </section>
 
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <!-- Sidebar -->
-      <div class="space-y-6">
+  <!-- Layout ให้ทั้งสองฝั่งสูงเท่ากัน -->
+  <div class="flex flex-col space-y-6 h-full lg:h-[calc(100%)]">
 
-        <!-- เลือกวันที่ -->
-        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-          <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
-            <i class="ph ph-calendar-minus text-blue-600 text-2xl"></i>
-            เลือกวันที่พยากรณ์
-          </h2>
-          <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-            {% for day in range(14) %}
-              {% set date_label = (today + timedelta(days=day)).strftime('%d %b') %}
-              <button
-                onclick="changeDay({{ day }})"
-                class="px-4 py-2 rounded-lg border text-sm whitespace-nowrap transition
-                  {% if day == current_day %}
-                    bg-blue-600 text-white border-blue-600 shadow-md
-                  {% else %}
-                    bg-white hover:bg-blue-50 border-gray-300 text-gray-700
-                  {% endif %}">
-                {{ date_label }}
-              </button>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- ระดับคุณภาพอากาศ -->
-        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-          <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
-            <i class="ph ph-wind text-green-600 text-2xl"></i>
-            ระดับคุณภาพอากาศ
-          </h2>
-          <div class="space-y-3 text-sm">
-            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-blue-400 rounded"></span> ดีมาก (0-15)</div>
-            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-green-400 rounded"></span> ดี (16-25)</div>
-            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-yellow-400 rounded"></span> ปานกลาง (26-37)</div>
-            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-orange-400 rounded"></span> เริ่มมีผล (38-50)</div>
-            <div class="flex items-center gap-3"><span class="w-6 h-6 bg-red-400 rounded"></span> มีผลต่อสุขภาพ (>50)</div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Map -->
-      <div class="lg:col-span-2 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-        {{ map_html|safe }}
+    <!-- Card: เลือกโมเดล -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 transition hover:shadow-xl">
+      <h2 class="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-800">
+        <i class="ph ph-brain text-blue-600 text-2xl"></i>
+        เลือกโมเดล
+      </h2>
+      <div class="flex gap-3 flex-wrap">
+        <a href="{{ url_for('dashboard.index', select_model='BiLSTM') }}"
+           class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
+           {% if select_model == 'BiLSTM' %}
+             bg-blue-600 text-white border-blue-600 shadow-md
+           {% else %}
+             bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700
+           {% endif %}">
+          BiLSTM
+        </a>
+        <a href="{{ url_for('dashboard.index', select_model='SARIMAX') }}"
+           class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
+           {% if select_model == 'SARIMAX' %}
+             bg-blue-600 text-white border-blue-600 shadow-md
+           {% else %}
+             bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700
+           {% endif %}">
+          SARIMAX
+        </a>
       </div>
     </div>
 
+    <!-- เลือกวันที่ -->
+    <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+      <h2 class="text-lg font-semibold flex items-center gap-2 mb-4">
+        <i class="ph ph-calendar-minus text-blue-600 text-2xl"></i>
+        เลือกวันที่พยากรณ์
+      </h2>
+      <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+        {% for day in range(14) %}
+          {% set date_label = (today + timedelta(days=day)).strftime('%d %b') %}
+          <button
+            onclick="changeDay({{ day }})"
+            class="px-4 py-2 rounded-lg border text-sm whitespace-nowrap transition
+              {% if day == current_day %}
+                bg-blue-600 text-white border-blue-600 shadow-md
+              {% else %}
+                bg-white hover:bg-blue-50 border-gray-300 text-gray-700
+              {% endif %}">
+            {{ date_label }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Card: ระดับคุณภาพอากาศ -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 transition hover:shadow-xl flex-grow">
+      <h2 class="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-800">
+        <i class="ph ph-wind text-green-600 text-2xl"></i>
+        ระดับคุณภาพอากาศ
+      </h2>
+      <div class="space-y-3 text-sm text-gray-700">
+        <div class="flex items-center gap-3"><span class="w-6 h-6 bg-blue-400 rounded-md shadow-sm"></span> ดีมาก (0–15)</div>
+        <div class="flex items-center gap-3"><span class="w-6 h-6 bg-green-400 rounded-md shadow-sm"></span> ดี (16–25)</div>
+        <div class="flex items-center gap-3"><span class="w-6 h-6 bg-yellow-400 rounded-md shadow-sm"></span> ปานกลาง (26–37)</div>
+        <div class="flex items-center gap-3"><span class="w-6 h-6 bg-orange-400 rounded-md shadow-sm"></span> เริ่มมีผล (38–50)</div>
+        <div class="flex items-center gap-3"><span class="w-6 h-6 bg-red-400 rounded-md shadow-sm"></span> มีผลต่อสุขภาพ (>50)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Map -->
+  <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition hover:shadow-xl h-fit">
+    {{ map_html | safe }}
+  </div>
+</div>
+  
+
+
+    
+
+
     <!-- Table -->
     <div class="mt-8">
+
+      <div class="mb-4">
+        <h1 class="text-xl">
+          ข้อมูล PM2.5
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">อัปเดตล่าสุดเมื่อ {{ latest_date }}</p>
+      </div>
+        
+
       <div class="bg-white shadow-xl border border-gray-100 rounded-lg overflow-hidden">
         <div class="overflow-x-auto">
           <table class="table table-zebra w-full text-sm">
@@ -106,9 +148,24 @@
                 <th class="px-4 py-4 text-center">PM2.5 (µg/m³)</th>
                 <th class="px-4 py-4 text-center">PM1 (µg/m³)</th>
                 <th class="px-4 py-4 text-center">PM0.1 (µg/m³)</th>
-                <th class="px-4 py-4 text-center">อุณหภูมิ (°C)</th>
-                <th class="px-4 py-4 text-center">ความชื้น (%)</th>
-                <th class="px-4 py-4 text-center">รายละเอียด</th>
+                <th class="px-4 py-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <i class="ph ph-thermometer text-xl"></i>
+                    อุณหภูมิ (°C)
+                  </div>
+                </th>
+                <th class="px-4 py-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <i class="ph ph-drop-simple text-xl"></i>
+                    <span>ความชื้น (%)</span>
+                  </div>
+                </th>
+                <th class="px-4 py-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <i class="ph ph-info text-xl"></i>
+                    <span>รายละเอียด</span>
+                  </div>
+                </th>
               </tr>
             </thead>
 
@@ -123,15 +180,15 @@
                       {% set pm25 = model.PM_2_5 | float %}
                       
                       {% if 0 <= pm25 <= 25 %}
-                        {% set bg_class = "bg-blue-500" %}
+                        {% set bg_class = "bg-blue-400" %}
                       {% elif 26 <= pm25 <= 37 %}
-                        {% set bg_class = "bg-green-500" %}
+                        {% set bg_class = "bg-green-400" %}
                       {% elif 38 <= pm25 <= 50 %}
                         {% set bg_class = "bg-yellow-400" %}
                       {% elif 51 <= pm25 <= 90 %}
-                        {% set bg_class = "bg-orange-500" %}
+                        {% set bg_class = "bg-orange-400" %}
                       {% else %}
-                        {% set bg_class = "bg-red-500" %}
+                        {% set bg_class = "bg-red-400" %}
                       {% endif %}
 
                       <div class="text-white px-2 py-1 w-1/2 rounded mx-auto {{ bg_class }}">
