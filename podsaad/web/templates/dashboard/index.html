@@ -56,14 +56,14 @@
         เลือกโมเดล
       </h2>
       <div class="flex gap-3 flex-wrap">
-        <a href="{{ url_for('dashboard.index', select_model='BiLSTM') }}"
+        <a href="{{ url_for('dashboard.index', select_model='Conv1D+BiLSTM') }}"
            class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
-           {% if select_model == 'BiLSTM' %}
+           {% if select_model == 'Conv1D+BiLSTM' %}
              bg-blue-600 text-white border-blue-600 shadow-md
            {% else %}
              bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700
            {% endif %}">
-          BiLSTM
+          Conv1D+BiLSTM
         </a>
         <a href="{{ url_for('dashboard.index', select_model='SARIMAX') }}"
            class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200
@@ -122,11 +122,6 @@
     {{ map_html | safe }}
   </div>
 </div>
-  
-
-
-    
-
 
     <!-- Table -->
     <div class="mt-8">

@@ -4,8 +4,8 @@ from datetime import date, datetime, timedelta
 
 
 
-from podsaad.web.utils.get_bilstm_heatmap import get_pm25_level, get_pm25_color, create_bilstm_map
-from podsaad.web.utils.get_sarimax_heatmap import get_pm25_level, get_pm25_color, create_sarimax_map
+from podsaad.web.utils.get_heatmap import get_pm25_level, get_pm25_color, create_map
+# from podsaad.web.utils.get_sarimax_heatmap import get_pm25_level, get_pm25_color, create_sarimax_map
 
 from podsaad import models
 import json
@@ -63,16 +63,11 @@ def index():
 
     # Heatmap
     select_day = int(request.args.get("select_day", 0))
-    select_model = request.args.get("select_model", "BiLSTM")
+    select_model = request.args.get("select_model", "Conv1D+BiLSTM")
     
     map_html = None
+    map_html = create_map(select_day, select_model)
 
-    if select_model == "BiLSTM":
-        map_html = create_bilstm_map(select_day)
-        print(f"DEBUG Select BiLSTM")
-    else:
-        map_html = create_sarimax_map(select_day)
-        print(f"DEBUG Select SARIMAX")
 
 
     # SARIMAX

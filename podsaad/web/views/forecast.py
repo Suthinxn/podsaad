@@ -62,7 +62,7 @@ model.load_state_dict(torch.load("models_pytorch/best_model.pt", map_location="c
 model.eval()
 
     # โหลด scaler ที่ใช้ตอน train
-scaler_sarimax = load("models_sarimax/exog_scaler.pkl")
+# scaler_sarimax = load("models_sarimax/exog_scaler.pkl")
 sarimax_model = load("models_sarimax/best_model.pkl")
 
 @module.route("/test", methods=["GET"])
@@ -125,7 +125,6 @@ def forecast_test_sarimax():
     all_results = []
 
     for station_code in stations:
-        # สร้าง mock history
         df_daily = pd.DataFrame({
             "timestamp": dates,
             "PM_2_5": np.random.uniform(10, 100, size=LOOKBACK),
@@ -140,19 +139,14 @@ def forecast_test_sarimax():
             "month_cos": np.random.uniform(-1, 1, size=LOOKBACK),
         }).set_index("timestamp")
 
-        # สร้าง future_dates
         start_future = end_date + pd.Timedelta(days=1)
         future_dates = pd.date_range(start=start_future, periods=HORIZON, freq="D")
 
-        # สร้าง exog_future ผ่านฟังก์ชัน utils
-        exog_future = generate_exog_future(df_daily, SARIMAX_EXOG_COLS, future_dates, LOOKBACK)
-
-
-        # scale
-        exog_future_scaled = scaler_sarimax.transform(exog_future)
+        exog_future = df_daily[SARIMAX_EXOG_COLS].iloc[-HORIZON:]
+        # exog_future_scaled = scaler_sarimax.transform(exog_future)
 
         # forecast
-        forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future_scaled)
+        forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future)
         forecast_mean = forecast.predicted_mean
         forecast_mean.index = future_dates
 
@@ -188,8 +182,8 @@ def get_collection_class(station_code):
     }
     return type(f"PM25Interpolated_{station_code}", (Document,), class_attrs)
 
-@module.route("/predict", methods=["GET"])
-def forecast():
+@module.route("/predict_bilstm", methods=["GET"])
+def forecast_bilstm():
     stations = [
         "119t","118t","93t","89t","62t","121t","o73","120t","43t",
         "63t","78t","o70","44t","o28","42t",
@@ -241,4 +235,75 @@ def forecast():
             "forecast": forecast_real.tolist(),
         })
     
+    return jsonify({"result": all_results})
+
+
+@module.route("/predict_sarimax", methods=["GET"])
+def forecast_sarimax():
+    stations = [
+        "119t","118t","93t","89t","62t","121t","o73","120t","43t",
+        "63t","78t","o70","44t","o28","42t",
+    ]
+
+    all_results = []
+    end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    for station_code in stations:
+        # 1️⃣ ดึง class ของ collection ตาม station
+        CollectionClass = get_collection_class(station_code)
+
+        # 2️⃣ ดึงข้อมูลย้อนหลัง LOOKBACK วัน (เรียงจากใหม่ → เก่า)
+        records = list(
+            CollectionClass.objects().order_by("-timestamp").limit(LOOKBACK)
+        )
+
+        if len(records) < LOOKBACK:
+            print(f"⛔ ข้อมูลไม่พอสำหรับ {station_code}")
+            continue
+
+        # 3️⃣ แปลงเป็น DataFrame
+        df_daily = pd.DataFrame([
+            {f: getattr(r, f) for f in SARIMAX_EXOG_COLS + ["PM_2_5", "timestamp"]}
+            for r in records
+        ])
+        df_daily["timestamp"] = pd.to_datetime(df_daily["timestamp"])
+        df_daily = df_daily.sort_values("timestamp").set_index("timestamp")
+
+        # 4️⃣ เติม NaN (ถ้ามี)
+        df_daily = df_daily.interpolate(method="linear").ffill().bfill()
+
+        # 5️⃣ สร้างวันที่อนาคต
+        start_future = end_date + pd.Timedelta(days=1)
+        future_dates = pd.date_range(start=start_future, periods=HORIZON, freq="D")
+
+        # 6️⃣ เตรียม exogenous variables สำหรับอนาคต
+        #    → ใช้ค่าล่าสุดจาก LOOKBACK วันสุดท้าย (หรือจากฟังก์ชัน generate_exog_future)
+        # exog_future = df_daily[SARIMAX_EXOG_COLS].iloc[-HORIZON:].copy()
+
+        # ถ้ามี generate_exog_future() ที่สร้างฟีเจอร์ day_of_week / month sin/cos ได้สมบูรณ์กว่า
+        # สามารถใช้แทนบรรทัดบนได้ เช่น:
+        exog_future = generate_exog_future(df_daily, SARIMAX_EXOG_COLS, future_dates, LOOKBACK)
+
+        # try:
+        #     exog_future_scaled = scaler_sarimax.transform(exog_future)
+        # except Exception as e:
+        #     print(f"⚠️ Scaling error at {station_code}: {e}")
+        #     continue
+
+        # 7️⃣ พยากรณ์ด้วย SARIMAX (ไม่ต้อง .fit() เพราะโมเดลฟิตไว้แล้ว)
+        try:
+            forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future)
+            forecast_mean = forecast.predicted_mean
+            forecast_mean.index = future_dates
+        except Exception as e:
+            print(f"⚠️ Forecast error at {station_code}: {e}")
+            continue
+
+        # 8️⃣ บันทึกผลลัพธ์
+        all_results.append({
+            "station_code": station_code,
+            "forecast_days": HORIZON,
+            "forecast": forecast_mean.tolist(),
+        })
+
     return jsonify({"result": all_results})

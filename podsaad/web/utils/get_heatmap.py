@@ -41,8 +41,14 @@ def get_pm25_color(value):
         return "#FF0000"
 
 
-def get_data_json():
-    url = "http://localhost:8080/forecast/predict"
+def get_data_json(model):
+    
+    if model == "Conv1D+BiLSTM":
+        url = "http://localhost:8080/forecast/predict_bilstm"
+    else:
+        url = "http://localhost:8080/forecast/predict_sarimax"
+    
+    
     res = requests.get(url)
 
     if res.status_code == 200:
@@ -60,7 +66,7 @@ def get_data_json():
         raise Exception(f"Error {res.status_code}")
 
 
-def generate_heatmap_image(select_day):
+def generate_heatmap_image(select_day, model):
     """สร้างภาพ heatmap และ return เป็น base64"""
     # โหลด GeoJSON
     # Download from https://github.com/apisit/thailand.json
@@ -93,7 +99,7 @@ def generate_heatmap_image(select_day):
     mask_geom = gdf_south.unary_union
 
     # ดึงข้อมูล PM2.5 ที่ predict
-    df_forecast = get_data_json()
+    df_forecast = get_data_json(model)
 
     # กรองข้อมูลตาม select_day
     df_forecast_day = df_forecast[df_forecast["day"] == select_day].copy()
@@ -204,13 +210,13 @@ def generate_heatmap_image(select_day):
     )
 
 
-def create_bilstm_map(select_day):
+def create_map(select_day, model):
 
-    print(f"---Create BiLSTM MAP---")
+    # print(f"---Create BiLSTM MAP---")
     # สร้างแผนที่
     
     img_data, southern_features, df_pm25, bounds, vmin, vmax = generate_heatmap_image(
-        select_day
+        select_day, model
     )
     minx, miny, maxx, maxy = bounds
 
@@ -244,10 +250,27 @@ def create_bilstm_map(select_day):
         tooltip=folium.GeoJsonTooltip(fields=["name"], aliases=["จังหวัด: "]),
     ).add_to(m)
 
+    provinces = {
+    "Krabi": "กระบี่",
+    "Chumphon": "ชุมพร",
+    "Trang": "ตรัง",
+    "Nakhon Si Thammarat": "นครศรีธรรมราช",
+    "Narathiwat": "นราธิวาส",
+    "Pattani": "ปัตตานี",
+    "Phangnga": "พังงา",
+    "Phatthalung": "พัทลุง",
+    "Phuket": "ภูเก็ต",
+    "Yala": "ยะลา",
+    "Ranong": "ระนอง",
+    "Songkhla": "สงขลา",
+    "Surat Thani": "สุราษฎร์ธานี",
+    }
+
     # Markers
     for _, row in df_pm25.iterrows():
         color = get_pm25_color(row["PM25"])
         level = get_pm25_level(row["PM25"])
+        
         folium.map.Marker(
             [row["Lat"], row["Lon"]],
             icon=folium.DivIcon(
@@ -263,8 +286,8 @@ def create_bilstm_map(select_day):
             popup=folium.Popup(
                 f"""
                 <div style="font-family:Sarabun,sans-serif;min-width:180px;">
-                    <h4 style="color:{color};">จังหวัด{row['province']}</h4>
-                    <b>ค่า PM2.5:</b> <span style="color:{color};">{row["PM25"]}</span> µg/m³<br>
+                    <h4 style="color:{color};">จังหวัด{ provinces[row['province']] }</h4>
+                    <b>ค่า PM2.5:</b> <span style="color:{color};">{row["PM25"]:.2f}</span> µg/m³<br>
                     <b>ระดับ:</b> <span style="color:{color};">{level}</span>
                 </div>
             """,
@@ -283,6 +306,3 @@ def create_bilstm_map(select_day):
 
     # แปลง map เป็น HTML
     return m._repr_html_()
-
-
-    
