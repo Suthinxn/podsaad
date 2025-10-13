@@ -6,14 +6,15 @@ BETA_HT = 0.3
 NOISE_STD_RATIO = 0.1
 
 def generate_exog_future(exog_history, exog_cols, future_dates, LOOKBACK):
-
     exog_future_list = []
-    
     exog_history = exog_history.copy()
 
     for i in range(len(future_dates)):
         next_values = {}
         current_date = future_dates[i]
+
+        np.random.seed(int(current_date.strftime("%Y%m%d")))
+
         month = current_date.month
 
         col = 'humidity'
@@ -45,8 +46,8 @@ def generate_exog_future(exog_history, exog_cols, future_dates, LOOKBACK):
         dow = current_date.weekday()
         next_values['day_of_week_sin'] = np.sin(2 * np.pi * dow / 7)
         next_values['day_of_week_cos'] = np.cos(2 * np.pi * dow / 7)
-        next_values['month_sin'] = np.sin(2 * np.pi * (month-1) / 12)
-        next_values['month_cos'] = np.cos(2 * np.pi * (month-1) / 12)
+        next_values['month_sin'] = np.sin(2 * np.pi * (month - 1) / 12)
+        next_values['month_cos'] = np.cos(2 * np.pi * (month - 1) / 12)
 
         exog_history.loc[current_date] = next_values
         exog_future_list.append([next_values[c] for c in exog_cols])
