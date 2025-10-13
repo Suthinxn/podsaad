@@ -10,6 +10,8 @@ from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_
 from joblib import load
 from mongoengine import Document, StringField, FloatField
 
+from utils import generate_exog_future
+
 
 module = Blueprint("forecast", __name__, url_prefix="/forecast")
 
@@ -22,7 +24,7 @@ FEATURES = [
     "month_sin", "month_cos"
 ]
 
-SARIMAX_FEATURES = ["PM_1","PM_0_1","humidity","pressure","temperature",
+SARIMAX_EXOG_COLS = ["PM_1","PM_0_1","humidity","pressure","temperature",
                     "day_of_week_sin","day_of_week_cos","month_sin","month_cos"] 
 
 
@@ -111,6 +113,12 @@ def forecast_test():
 
     return jsonify({"result": all_results})
 
+from flask import Blueprint, jsonify
+from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
+from utils import generate_exog_future  # import จากไฟล์ utils.py
+
 @module.route("/test_sarimax", methods=["GET"])
 def forecast_test_sarimax():
     stations = [
@@ -118,14 +126,12 @@ def forecast_test_sarimax():
         "63t","78t","o70","44t","o28","42t",
     ]
 
-    # วันที่ล่าสุดและช่วงเวลา
     end_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     dates = pd.date_range(end=end_date, periods=LOOKBACK, freq="D")
-
     all_results = []
 
     for station_code in stations:
-
+        # สร้าง mock history
         df_daily = pd.DataFrame({
             "timestamp": dates,
             "PM_2_5": np.random.uniform(10, 100, size=LOOKBACK),
@@ -140,18 +146,21 @@ def forecast_test_sarimax():
             "month_cos": np.random.uniform(-1, 1, size=LOOKBACK),
         }).set_index("timestamp")
 
-        exog_future = df_daily[SARIMAX_FEATURES].iloc[-HORIZON:]
+        # สร้าง future_dates
+        start_future = end_date + pd.Timedelta(days=1)
+        future_dates = pd.date_range(start=start_future, periods=HORIZON, freq="D")
 
-        # Scale ด้วย scaler เดิมที่ fit จาก train
+        # สร้าง exog_future ผ่านฟังก์ชัน utils
+        exog_future = generate_exog_future(df_daily, SARIMAX_EXOG_COLS, future_dates, LOOKBACK)
+
+
+        # scale
         exog_future_scaled = scaler_sarimax.transform(exog_future)
 
+        # forecast
         forecast = sarimax_model.get_forecast(steps=HORIZON, exog=exog_future_scaled)
         forecast_mean = forecast.predicted_mean
-
-        forecast_mean.index = pd.date_range(
-            end=end_date + pd.Timedelta(days=HORIZON-1),
-            periods=HORIZON
-        )
+        forecast_mean.index = future_dates
 
         all_results.append({
             "station_code": station_code,
@@ -160,6 +169,7 @@ def forecast_test_sarimax():
         })
 
     return jsonify({"result": all_results})
+
 
 
 def get_collection_class(station_code):
