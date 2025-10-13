@@ -4,10 +4,11 @@ from datetime import date, datetime, timedelta
 
 
 
-from podsaad.web.utils.get_heatmap import get_pm25_level, get_pm25_color, create_map
+from podsaad.web.utils.get_bilstm_heatmap import get_pm25_level, get_pm25_color, create_bilstm_map
+from podsaad.web.utils.get_sarimax_heatmap import get_pm25_level, get_pm25_color, create_sarimax_map
+
 from podsaad import models
 import json
-
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -18,6 +19,7 @@ module = Blueprint("dashboard", __name__)
 @module.route("/")
 def index():
     current_day = request.args.get("select_day", default=0, type=int)
+    latest_date = datetime.now().strftime("%Y-%m-%d")
 
     station_descriptions = {
     "119t": "สวนสาธารณะธารา ต.ปากน้ำ อ.เมือง, กระบี่",
@@ -36,8 +38,6 @@ def index():
     "o28": "โรงเรียนชุมชนบ้านปาดัง ต.ปาดังเบซาร์ อ.สะเดา, จ.สงขลา",
     "42t": "สำนักงานสิ่งแวดล้อมภาคที่ 14 ต.มะขามเตี้ย อ.เมือง, สุราษฎร์ธานี",
     }
-
-
 
     models_list = []
     stations = [
@@ -63,9 +63,20 @@ def index():
 
     # Heatmap
     select_day = int(request.args.get("select_day", 0))
-    map_html = create_map(select_day)
+    select_model = request.args.get("select_model", "BiLSTM")
+    
+    map_html = None
 
-    return render_template("dashboard/index.html", map_html=map_html,today=datetime.today(),current_day=current_day,timedelta=timedelta, models_list=models_list, station_descriptions=station_descriptions)
+    if select_model == "BiLSTM":
+        map_html = create_bilstm_map(select_day)
+        print(f"DEBUG Select BiLSTM")
+    else:
+        map_html = create_sarimax_map(select_day)
+        print(f"DEBUG Select SARIMAX")
+
+
+    # SARIMAX
+    return render_template("dashboard/index.html", map_html=map_html,today=datetime.today(),current_day=current_day,timedelta=timedelta, models_list=models_list, station_descriptions=station_descriptions, latest_date=latest_date)
 
 
 # def pm25_to_intensity(value):
@@ -127,10 +138,7 @@ def graph_infomation(station):
     # if not model:
     #     return redirect("dashboard.index")  # กรณี model ไม่พบ
 
-    data_last_7_days = model.objects(
-        timestamp__gte=days_ago_str,
-        timestamp__lte=today_str
-    ).order_by('-timestamp')
+    data_last_7_days = model.objects(timestamp__gte=days_ago_str,timestamp__lte=today_str).order_by('timestamp')
 
     timestamps = []
 
@@ -141,7 +149,7 @@ def graph_infomation(station):
     
     pm25_list = []
     for data in data_last_7_days:
-        pm25_list.append(data.PM_2_5)
+        pm25_list.append(round(data.PM_2_5, 2))
 
     print(f"DEBUG pm2.5 : {pm25_list}")
 

@@ -10,7 +10,7 @@ from podsaad.web.utils.get_data_pm25 import fetch_data, get_raw_data, filter_by_
 from joblib import load
 from mongoengine import Document, StringField, FloatField
 
-from utils import generate_exog_future
+from podsaad.web.utils.generate_exog_future import generate_exog_future
 
 
 module = Blueprint("forecast", __name__, url_prefix="/forecast")
@@ -112,12 +112,6 @@ def forecast_test():
         })
 
     return jsonify({"result": all_results})
-
-from flask import Blueprint, jsonify
-from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
-from utils import generate_exog_future  # import จากไฟล์ utils.py
 
 @module.route("/test_sarimax", methods=["GET"])
 def forecast_test_sarimax():

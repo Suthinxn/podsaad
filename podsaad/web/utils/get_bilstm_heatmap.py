@@ -204,8 +204,9 @@ def generate_heatmap_image(select_day):
     )
 
 
-def create_map(select_day):
-        
+def create_bilstm_map(select_day):
+
+    print(f"---Create BiLSTM MAP---")
     # สร้างแผนที่
     
     img_data, southern_features, df_pm25, bounds, vmin, vmax = generate_heatmap_image(
