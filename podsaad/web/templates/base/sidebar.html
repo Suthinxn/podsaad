@@ -23,18 +23,18 @@
             <span>Dashboard</span>
           </a>
         </li>
-        <li>
+        {#<li>
           <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
             href="">
             <i class="ph ph-chart-line-up text-lg"></i>
             <span>Forecasts</span>
           </a>
-        </li>
+        </li>#}
       </ul>
     </div>
 
     <!-- Main Menu -->
-    <div class="mb-6">
+    {#<div class="mb-6">
       <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Workflow</p>
       <ul class="space-y-1">
         <li>
@@ -127,12 +127,12 @@
               </li>
             </ul>
           </details>
-        </li>#}
+        </li>
       </ul>
-    </div>
+    </div>#}
 
     <!-- Other Menu -->
-    <div>
+    {#<div>
       <p class="text-sm font-semibold text-gray-500 uppercase mb-2">Other Menu</p>
       <ul class="space-y-1">
         <li>
@@ -142,14 +142,14 @@
             <span>Users</span>
           </a>
         </li>
-        {#<li>
+        <li>
           <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
             href="{{ url_for('email_templates.index') }}">
             <i class="ph ph-envelope text-lg"></i>
             <span>Email Templates</span>
           </a>
         </li>
-        <li>#}
+        <li>
           <a class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md transition-colors"
             href="">
             <i class="ph ph-sign-out text-lg"></i>
@@ -157,11 +157,11 @@
           </a>
         </li>
       </ul>
-    </div>
+    </div>#}
   </div>
 
   <!-- Bottom Profile -->
-  <div class="flex items-center gap-3 bg-gray-200 rounded-lg p-3">
+  {#<div class="flex items-center gap-3 bg-gray-200 rounded-lg p-3">
     <div class="avatar">
       <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white">
         <i class="ph ph-user text-2xl flex align-center justify-center m-[0.2rem]"></i>
@@ -171,5 +171,5 @@
       <p class="font-medium leading-tight">{{ current_user.first_name }} {{ current_user.last_name }}</p>
       <p class="text-xs text-gray-500">{{ current_user.email }}</p>
     </div>
-  </div>
+  </div>#}
 </div>

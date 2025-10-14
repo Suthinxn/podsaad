@@ -26,44 +26,43 @@
 
     <!-- Cards -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-      <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
-        <h3 class="text-gray-600 text-sm font-medium">สถานะปัจจุบัน</h3>
-          {% if avg_pm25 is not none %}
-              {% set pm25 = avg_pm25 | float %}
+        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
+          <h3 class="text-gray-600 text-sm font-medium">ภาพรวม PM2.5 วันนี้</h3>
+            {% if avg_pm25 is not none %}
+                {% set pm25 = avg_pm25 | float %}
+                {% if 0 <= pm25 <= 25 %}
+                    {% set color_class = "text-green-500" %}
+                    {% set level_text = "ดีมาก" %}
+                {% elif 26 <= pm25 <= 37 %}
+                    {% set color_class = "text-lime-500" %}
+                    {% set level_text = "ดี" %}
+                {% elif 38 <= pm25 <= 50 %}
+                    {% set color_class = "text-yellow-500" %}
+                    {% set level_text = "ปานกลาง" %}
+                {% elif 51 <= pm25 <= 90 %}
+                    {% set color_class = "text-orange-500" %}
+                    {% set level_text = "เริ่มมีผล" %}
+                {% else %}
+                    {% set color_class = "text-red-500" %}
+                    {% set level_text = "มีผลต่อสุขภาพ" %}
+                {% endif %}
 
-              {% if 0 <= pm25 <= 25 %}
-                  {% set color_class = "text-green-500" %}
-                  {% set level_text = "ดีมาก" %}
-              {% elif 26 <= pm25 <= 37 %}
-                  {% set color_class = "text-lime-500" %}
-                  {% set level_text = "ดี" %}
-              {% elif 38 <= pm25 <= 50 %}
-                  {% set color_class = "text-yellow-500" %}
-                  {% set level_text = "ปานกลาง" %}
-              {% elif 51 <= pm25 <= 90 %}
-                  {% set color_class = "text-orange-500" %}
-                  {% set level_text = "เริ่มมีผล" %}
-              {% else %}
-                  {% set color_class = "text-red-500" %}
-                  {% set level_text = "มีผลต่อสุขภาพ" %}
-              {% endif %}
-
-              <p class="text-3xl font-bold {{ color_class }} mt-2">
-                  {{ level_text }}
-              </p>
-              <p class="text-gray-500 text-sm">เฉลี่ย {{ pm25 | round(2) }} µg/m³</p>
-          {% else %}
-              <p class="text-gray-500 text-sm">ไม่มีข้อมูล</p>
-          {% endif %}
-      </div>
+                <p class="text-3xl font-bold {{ color_class }} mt-2">
+                    {{ level_text }}
+                </p>
+                <p class="text-gray-500 text-sm">เฉลี่ย {{ pm25 | round(2) }} µg/m³</p>
+            {% else %}
+                <p class="text-gray-500 text-sm">ไม่มีข้อมูล</p>
+            {% endif %}
+        </div>
       <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
         <h3 class="text-gray-600 text-sm font-medium">ระยะพยากรณ์</h3>
         <p class="text-3xl font-bold text-blue-600 mt-2">14 วัน</p>
         <p class="text-gray-500 text-sm">อัปเดตข้อมูลทุกวันเวลา 00:00 น.</p>
       </div>
       <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
-        <h3 class="text-gray-600 text-sm font-medium">พื้นที่ครอบคลุม</h3>
-        <p class="text-3xl font-bold text-purple-600 mt-2">14 จังหวัด</p>
+        <h3 class="text-gray-600 text-sm font-medium">พร้อมใช้งาน</h3>
+        <p class="text-3xl font-bold text-purple-600 mt-2">7 สถานี</p>
         <p class="text-gray-500 text-sm">ภาคใต้ของไทย</p>
       </div>
     </section>

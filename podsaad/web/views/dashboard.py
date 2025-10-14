@@ -3,8 +3,13 @@ from flask_login import login_required
 from datetime import date, datetime, timedelta
 
 
+from podsaad.web.utils.get_heatmap import (
+    get_pm25_level,
+    get_pm25_color,
+    create_map,
+    get_station_dexcriptions,
+)
 
-from podsaad.web.utils.get_heatmap import get_pm25_level, get_pm25_color, create_map, get_station_dexcriptions 
 # from podsaad.web.utils.get_sarimax_heatmap import get_pm25_level, get_pm25_color, create_sarimax_map
 
 from podsaad import models
@@ -15,9 +20,9 @@ warnings.filterwarnings("ignore")
 module = Blueprint("dashboard", __name__)
 
 
-
 @module.route("/")
 def index():
+    print("teast", models.__file__)
     current_day = request.args.get("select_day", default=0, type=int)
     latest_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -26,24 +31,39 @@ def index():
     selected_date = today + timedelta(days=select_day)
     selected_date_label = selected_date.strftime("%d %b %Y")  # เช่น 13 Oct 2025
 
-
     models_list = []
     stations = [
-    "119t","118t","93t","89t","62t","121t","o73","120t","43t",
-    "63t","78t","o70","44t","o28","42t",
+        "119t",
+        "118t",
+        "93t",
+        "89t",
+        "62t",
+        "121t",
+        "o73",
+        "120t",
+        "43t",
+        "63t",
+        "78t",
+        "o70",
+        "44t",
+        "o28",
+        "42t",
     ]
 
     # print(f"DEBUG TIME {str(date.today())}")
     for i in stations:
         collection_name = f"PM25Interpolated{i}"
-        model_class = getattr(models, collection_name, None)    
+        model_class = getattr(models, collection_name, None)
 
         # Check None Model
         if model_class is None:
             continue
 
-        latest_record = model_class.objects(timestamp="2025-10-11").first() 
+        latest_record = model_class.objects(timestamp="2025-10-12").first()
+        # latest_record = model_class.objects(timestamp=str(date.today())).first()
+
         if latest_record:
+            print(f"DEBUG : {model_class}")
             models_list.append(latest_record)
             # print(f"DEBUG Collection : {model_class}")
 
@@ -60,22 +80,23 @@ def index():
     # Heatmap
     select_day = int(request.args.get("select_day", 0))
     select_model = request.args.get("select_model", "Conv1D+BiLSTM")
-    
+
     map_html = None
     map_html = create_map(select_day, select_model)
 
-    return render_template("dashboard/index.html", 
-                           map_html=map_html,
-                           today=datetime.today(),
-                           current_day=current_day,
-                           timedelta=timedelta, 
-                           models_list=models_list, 
-                           station_descriptions=get_station_dexcriptions(),
-                           latest_date=latest_date,
-                           avg_pm25=avg_pm25,
-                           select_model=select_model,
-                           selected_date_label=selected_date_label)
-
+    return render_template(
+        "dashboard/index.html",
+        map_html=map_html,
+        today=datetime.today(),
+        current_day=current_day,
+        timedelta=timedelta,
+        models_list=models_list,
+        station_descriptions=get_station_dexcriptions(),
+        latest_date=latest_date,
+        avg_pm25=avg_pm25,
+        select_model=select_model,
+        selected_date_label=selected_date_label,
+    )
 
 
 @module.route("/top10_province", methods=["GET", "POST"])
@@ -87,7 +108,7 @@ def top10_province():
 def graph_infomation(station):
     print(f"Station : {station}")
 
-    today = datetime.today()    
+    today = datetime.today()
     days_ago = today - timedelta(days=14)
 
     today_str = today.strftime("%Y-%m-%d")
@@ -96,28 +117,31 @@ def graph_infomation(station):
     collection_name = f"PM25Interpolated{station}"
     model = getattr(models, collection_name, None)
 
-    data_last_7_days = model.objects(timestamp__gte=days_ago_str,timestamp__lte=today_str).order_by('timestamp')
+    data_last_7_days = model.objects(
+        timestamp__gte=days_ago_str, timestamp__lte=today_str
+    ).order_by("timestamp")
 
     timestamps = []
 
-
     for data in data_last_7_days:
         timestamps.append(data.timestamp)
-    
+
     pm25_list = []
     for data in data_last_7_days:
         pm25_list.append(round(data.PM_2_5, 2))
 
     chart_data = {
-        'series': [{
-            'name': 'PM2.5',
-            'data': pm25_list
-        }],
-        'categories': timestamps
+        "series": [{"name": "PM2.5", "data": pm25_list}],
+        "categories": timestamps,
     }
 
     json_data = json.dumps(chart_data)
 
     model = model.objects().first()
 
-    return render_template("/dashboard/graph_infomation.html", chart_json=json_data, model=model, station_descriptions=get_station_dexcriptions())
+    return render_template(
+        "/dashboard/graph_infomation.html",
+        chart_json=json_data,
+        model=model,
+        station_descriptions=get_station_dexcriptions(),
+    )
