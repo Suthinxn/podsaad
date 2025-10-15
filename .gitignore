@@ -9,6 +9,8 @@ dist/
 *.egg-info/
 .eggs/
 *.egg
+*.pkl
+*.pt
 
 # Installer logs
 pip-log.txt

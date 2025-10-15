@@ -75,7 +75,7 @@ def index():
     # print(f"DEBUG AVG PM25{avg_pm25}")
     avg_pm25 = 25
 
-    print(f"DEBUG models list {models_list}")
+    # print(f"DEBUG models list {models_list}")
 
     # Heatmap
     select_day = int(request.args.get("select_day", 0))
