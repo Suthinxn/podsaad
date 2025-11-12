@@ -171,11 +171,30 @@ def generate_heatmap_image(select_day, model):
     lat_centers = 0.5 * (lat_bins[:-1] + lat_bins[1:])
     Xc, Yc = np.meshgrid(lon_centers, lat_centers)
 
+    # --- IDW (Inverse Distance Weighting) Formula ---
+    # For each grid point (x, y):
+    #       Ẑ(x, y) = Σ( w_i * z_i ) / Σ( w_i )
+    # where:
+    #       w_i = 1 / ( d_i^p + ε )
+    #       d_i = sqrt( (x - x_i)^2 + (y - y_i)^2   )
+    #       p   = power parameter (usually 2)
+    #       ε   = small constant to avoid division by zero
+    #
+    # In this code:
+    #   - (Xc, Yc): grid coordinates
+    #   - (lon, lat): station coordinates
+    #   - val: PM2.5 value at each station
+    #   - power = 2, ε = 1e-10
+    #   - heat_grid accumulates (w_i * val)
+    #   - weight_sum accumulates (w_i)
+    #   - heat_interp = heat_grid / weight_sum  → interpolated surface
+
     power, epsilon = 2, 1e-10
     heat_grid = np.zeros_like(Xc)
     weight_sum = np.zeros_like(Xc)
 
     for lon, lat, val in zip(lons, lats, values):
+
         dist = np.sqrt((Xc - lon) ** 2 + (Yc - lat) ** 2)
         w = 1.0 / (dist**power + epsilon)
         heat_grid += w * val
